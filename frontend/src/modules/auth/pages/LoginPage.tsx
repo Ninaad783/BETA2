@@ -25,16 +25,8 @@ export const LoginPage: React.FC = () => {
         {/* Top Accent Gradient Bar */}
         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-400 via-sky-500 to-indigo-500"></div>
 
-        {/* Top Controls: Back to Site & Language Switcher */}
-        <div className="flex items-center justify-between mb-2">
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard')}
-            className="text-xs font-semibold text-slate-500 hover:text-emerald-600 transition flex items-center gap-1 cursor-pointer"
-          >
-            <span>←</span>
-            <span>{language === 'mr' ? 'डॅशबोर्डवर जा' : 'Go to App Dashboard'}</span>
-          </button>
+        {/* Top Controls: Language Switcher */}
+        <div className="flex items-center justify-end mb-2">
           <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs font-medium">
             <button
               type="button"

@@ -29,6 +29,9 @@ export interface Medicine {
   sellingPrice: number;
   mrp: number;
   rackLocation?: string;
+  hsnCode?: string;
+  manufacturer?: string;
+  requiresPrescription?: boolean;
   status: StockStatus;
   batches: MedicineBatch[];
 }
@@ -45,6 +48,7 @@ export interface CartItem {
   quantity: number;
   discountPercent: number;
   total: number;
+  requiresPrescription?: boolean;
 }
 
 export interface Customer {
@@ -82,7 +86,10 @@ export interface Supplier {
   name: string;
   contactPerson?: string;
   mobile: string;
+  email?: string;
   gstin?: string;
+  dlNumber?: string;
+  address?: string;
   currentDue: number;
 }
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppLayout } from '../../layouts/AppLayout';
-import { LandingPage } from '../../modules/landing/pages/LandingPage';
+import { SuppliersPage } from '../../modules/suppliers/pages/SuppliersPage';
 import { LoginPage } from '../../modules/auth/pages/LoginPage';
 import { DashboardPage } from '../../modules/dashboard/pages/DashboardPage';
 import { BillingPage } from '../../modules/billing/pages/BillingPage';
@@ -25,6 +25,7 @@ export const AppRouter: React.FC = () => {
           <Route path="/stock" element={<StockPage />} />
           <Route path="/stock/:id" element={<MedicineDetailsPage />} />
           <Route path="/purchases" element={<PurchasePage />} />
+          <Route path="/suppliers" element={<SuppliersPage />} />
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/customers/:id" element={<CustomerDetailsPage />} />
           <Route path="/reports" element={<ReportsPage />} />
@@ -33,11 +34,6 @@ export const AppRouter: React.FC = () => {
 
         {/* Public Login Route */}
         <Route path="/login" element={<LoginPage />} />
-
-        {/* Marketing / Landing Page Site */}
-        <Route path="/site" element={<LandingPage />} />
-        <Route path="/landing" element={<LandingPage />} />
-        <Route path="/about" element={<LandingPage />} />
 
         {/* Fallbacks */}
         <Route path="*" element={<Navigate to="/" replace />} />

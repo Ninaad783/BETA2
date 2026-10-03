@@ -29,6 +29,9 @@ export const INITIAL_MEDICINES: Medicine[] = [
     sellingPrice: 32.00,
     mrp: 35.00,
     rackLocation: 'A-04',
+    hsnCode: '3004',
+    manufacturer: 'Micro Labs Ltd',
+    requiresPrescription: false,
     status: 'IN_STOCK',
     batches: [
       {
@@ -69,6 +72,9 @@ export const INITIAL_MEDICINES: Medicine[] = [
     sellingPrice: 105.00,
     mrp: 120.00,
     rackLocation: 'B-12',
+    hsnCode: '3004',
+    manufacturer: 'Alkem Laboratories',
+    requiresPrescription: false,
     status: 'LOW_STOCK',
     batches: [
       {
@@ -97,6 +103,9 @@ export const INITIAL_MEDICINES: Medicine[] = [
     sellingPrice: 90.00,
     mrp: 95.00,
     rackLocation: 'C-01',
+    hsnCode: '3004',
+    manufacturer: 'Cipla Ltd',
+    requiresPrescription: true,
     status: 'OUT_OF_STOCK',
     batches: [
       {
@@ -125,6 +134,9 @@ export const INITIAL_MEDICINES: Medicine[] = [
     sellingPrice: 120.00,
     mrp: 135.00,
     rackLocation: 'D-08',
+    hsnCode: '3004',
+    manufacturer: 'Cadila Pharma',
+    requiresPrescription: false,
     status: 'IN_STOCK',
     batches: [
       {
@@ -153,6 +165,9 @@ export const INITIAL_MEDICINES: Medicine[] = [
     sellingPrice: 20.00,
     mrp: 22.00,
     rackLocation: 'Front Counter',
+    hsnCode: '3004',
+    manufacturer: 'FDC Ltd',
+    requiresPrescription: false,
     status: 'LOW_STOCK',
     batches: [
       {
@@ -220,7 +235,10 @@ export const INITIAL_SUPPLIERS: Supplier[] = [
     name: 'Pune Pharma Distributors',
     contactPerson: 'Vikas Deshmukh',
     mobile: '9822012345',
+    email: 'orders@punepharma.com',
     gstin: '27AABCP1234A1Z5',
+    dlNumber: '20B/21B-PUN-8921',
+    address: 'Plot 14, Marketyard, Pune 411037',
     currentDue: 14500
   },
   {
@@ -228,7 +246,10 @@ export const INITIAL_SUPPLIERS: Supplier[] = [
     name: 'Shivapur Medical Agency',
     contactPerson: 'Ganesh Kadam',
     mobile: '9850123456',
+    email: 'agency@shivapurmed.in',
     gstin: '27BBCDP5678B1Z2',
+    dlNumber: '20B/21B-PUN-7712',
+    address: 'Near ST Stand, Khed Shivapur 412205',
     currentDue: 8200
   },
   {
@@ -236,7 +257,10 @@ export const INITIAL_SUPPLIERS: Supplier[] = [
     name: 'Cipla Direct Wholesale',
     contactPerson: 'Rajesh Nair',
     mobile: '9890123456',
+    email: 'direct@cipla-wholesale.com',
     gstin: '27CCEDP9012C1Z8',
+    dlNumber: '20B/21B-MH-5541',
+    address: 'Bhosari MIDC, Pune 411026',
     currentDue: 0
   }
 ];

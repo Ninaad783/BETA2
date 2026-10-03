@@ -5,13 +5,12 @@ import {
   ReceiptText, 
   Pill, 
   PackagePlus, 
+  Truck,
   Users, 
   BarChart3, 
   Settings, 
   LogOut,
-  Plus,
-  Globe,
-  ExternalLink
+  Plus
 } from 'lucide-react';
 import { useUIStore } from '../stores/uiStore';
 import { usePharmacyStore } from '../stores/pharmacyStore';
@@ -26,6 +25,7 @@ export const Sidebar: React.FC = () => {
     { to: '/billing', label: t('navBilling'), icon: ReceiptText },
     { to: '/stock', label: t('navStock'), icon: Pill, badge: stats.lowStockCount, badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-500/30' },
     { to: '/purchases', label: t('navPurchases'), icon: PackagePlus },
+    { to: '/suppliers', label: t('navSuppliers'), icon: Truck },
     { to: '/customers', label: t('navUdhaar'), icon: Users, badge: stats.pendingDueCustomersCount, badgeColor: 'bg-rose-500/20 text-rose-300 border border-rose-500/30' },
     { to: '/reports', label: t('navReports'), icon: BarChart3 },
     { to: '/settings', label: t('navSettings'), icon: Settings },
@@ -73,20 +73,6 @@ export const Sidebar: React.FC = () => {
           );
         })}
       </nav>
-
-      {/* Product Website Link */}
-      <div className="px-3 pb-2">
-        <NavLink
-          to="/site"
-          className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-950/60 border border-emerald-800/50 text-emerald-300 hover:bg-emerald-900/60 hover:text-emerald-200 transition"
-        >
-          <div className="flex items-center gap-2">
-            <Globe className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Product Site</span>
-          </div>
-          <ExternalLink className="w-3 h-3 text-emerald-400" />
-        </NavLink>
-      </div>
 
       {/* User Footer Profile */}
       <div className="p-3 bg-slate-950/70 border-t border-slate-800 text-xs flex items-center justify-between">

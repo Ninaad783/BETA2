@@ -29,6 +29,8 @@ interface PharmacyState {
   selectedCustomerId: string;
   paymentMode: PaymentMode;
   notes: string;
+  doctorName: string;
+  patientName: string;
   invoiceCounter: number;
 
   // Customers & Suppliers
@@ -52,6 +54,8 @@ interface PharmacyState {
   setSelectedCustomerId: (customerId: string) => void;
   setPaymentMode: (mode: PaymentMode) => void;
   setNotes: (notes: string) => void;
+  setDoctorName: (name: string) => void;
+  setPatientName: (name: string) => void;
 
   // Checkout (FEFO stock deduction + customer due update)
   checkoutCurrentBill: () => { success: boolean; invoiceNumber: string; total: number };
@@ -65,6 +69,10 @@ interface PharmacyState {
   // Customer actions
   addCustomer: (customer: Omit<Customer, 'id' | 'totalPurchases' | 'currentDue' | 'totalBills' | 'lastPurchaseDate'>) => void;
   settleCustomerDue: (customerId: string, amount: number) => void;
+
+  // Supplier actions
+  addSupplier: (supplier: Omit<Supplier, 'id' | 'currentDue'>) => void;
+  settleSupplierDue: (supplierId: string, amount: number) => void;
 
   // Purchase actions
   addPurchase: (purchase: Omit<PurchaseInvoice, 'id'>) => void;
@@ -120,6 +128,8 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
   selectedCustomerId: 'cust-1',
   paymentMode: 'CASH',
   notes: '',
+  doctorName: '',
+  patientName: '',
   invoiceCounter: 842,
 
   customers: INITIAL_CUSTOMERS,
@@ -130,6 +140,8 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
   setStockFilterTab: (tab) => set({ stockFilterTab: tab }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSelectedMedicineId: (id) => set({ selectedMedicineId: id }),
+  setDoctorName: (name) => set({ doctorName: name }),
+  setPatientName: (name) => set({ patientName: name }),
 
   addItemToCart: (medicine, preferredBatch) => {
     const { cart } = get();
@@ -167,7 +179,8 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
         sellingPrice: batch.sellingPrice,
         quantity: 1,
         discountPercent: 0,
-        total: batch.sellingPrice
+        total: batch.sellingPrice,
+        requiresPrescription: medicine.requiresPrescription || false
       };
       set({ cart: [...cart, newItem] });
     }
@@ -198,7 +211,7 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
     }));
   },
 
-  clearCart: () => set({ cart: [] }),
+  clearCart: () => set({ cart: [], doctorName: '', patientName: '' }),
   setSelectedCustomerId: (customerId) => set({ selectedCustomerId: customerId }),
   setPaymentMode: (mode) => set({ paymentMode: mode }),
   setNotes: (notes) => set({ notes: notes }),
@@ -268,6 +281,8 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
       customers: updatedCustomers,
       stats: updatedStats,
       cart: [],
+      doctorName: '',
+      patientName: '',
       invoiceCounter: invoiceCounter + 1
     });
 
@@ -484,6 +499,31 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
         ...state.stats,
         todayPurchaseTotal: state.stats.todayPurchaseTotal + purchaseData.totalAmount
       }
+    }));
+  },
+
+  addSupplier: (supplierData) => {
+    const newSupplier: Supplier = {
+      ...supplierData,
+      id: `sup-${Date.now()}`,
+      currentDue: 0
+    };
+    set((state) => ({
+      suppliers: [newSupplier, ...state.suppliers]
+    }));
+  },
+
+  settleSupplierDue: (supplierId, amount) => {
+    set((state) => ({
+      suppliers: state.suppliers.map((s) => {
+        if (s.id === supplierId) {
+          return {
+            ...s,
+            currentDue: Math.max(0, s.currentDue - amount)
+          };
+        }
+        return s;
+      })
     }));
   }
 }));

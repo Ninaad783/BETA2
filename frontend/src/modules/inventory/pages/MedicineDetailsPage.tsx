@@ -27,6 +27,9 @@ export const MedicineDetailsPage: React.FC = () => {
   const [editCategory, setEditCategory] = useState(medicine?.category || '');
   const [editRack, setEditRack] = useState(medicine?.rackLocation || 'A-01');
   const [editMinStock, setEditMinStock] = useState(medicine?.minStockAlert || 15);
+  const [editHsn, setEditHsn] = useState(medicine?.hsnCode || '3004');
+  const [editManufacturer, setEditManufacturer] = useState(medicine?.manufacturer || '');
+  const [editRequiresPrescription, setEditRequiresPrescription] = useState(medicine?.requiresPrescription || false);
 
   const [adjustingBatch, setAdjustingBatch] = useState<{ batchNumber: string; currentStock: number } | null>(null);
   const [adjustedQty, setAdjustedQty] = useState(0);
@@ -39,6 +42,9 @@ export const MedicineDetailsPage: React.FC = () => {
       setEditCategory(medicine.category);
       setEditRack(medicine.rackLocation || 'A-01');
       setEditMinStock(medicine.minStockAlert);
+      setEditHsn(medicine.hsnCode || '3004');
+      setEditManufacturer(medicine.manufacturer || '');
+      setEditRequiresPrescription(medicine.requiresPrescription || false);
     }
     setShowEditModal(true);
   };
@@ -51,7 +57,10 @@ export const MedicineDetailsPage: React.FC = () => {
       genericName: editGeneric,
       category: editCategory,
       rackLocation: editRack,
-      minStockAlert: Number(editMinStock)
+      minStockAlert: Number(editMinStock),
+      hsnCode: editHsn,
+      manufacturer: editManufacturer,
+      requiresPrescription: editRequiresPrescription
     });
     setShowEditModal(false);
   };
@@ -106,9 +115,16 @@ export const MedicineDetailsPage: React.FC = () => {
             <span>{t('backToMedicines')}</span>
           </button>
           <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">{medicine.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-black text-slate-900 tracking-tight">{medicine.name}</h1>
+              {medicine.requiresPrescription && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-700 border border-rose-200 uppercase tracking-wider">
+                  Rx Schedule H
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              {medicine.genericName} • {medicine.category} • Rack: {medicine.rackLocation || 'A-01'}
+              {medicine.genericName} • {medicine.category} • HSN: {medicine.hsnCode || '3004'} {medicine.manufacturer ? `• Mfr: ${medicine.manufacturer}` : ''} • Rack: {medicine.rackLocation || 'A-01'}
             </p>
           </div>
         </div>
@@ -399,6 +415,40 @@ export const MedicineDetailsPage: React.FC = () => {
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono text-slate-800"
               />
             </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Manufacturer</label>
+              <input
+                type="text"
+                value={editManufacturer}
+                onChange={(e) => setEditManufacturer(e.target.value)}
+                placeholder="e.g. Cipla Ltd, Micro Labs"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-800"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">HSN Code</label>
+              <input
+                type="text"
+                value={editHsn}
+                onChange={(e) => setEditHsn(e.target.value)}
+                placeholder="3004"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono text-slate-800"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              type="checkbox"
+              id="editDetailReqPresc"
+              checked={editRequiresPrescription}
+              onChange={(e) => setEditRequiresPrescription(e.target.checked)}
+              className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300"
+            />
+            <label htmlFor="editDetailReqPresc" className="font-semibold text-slate-700 cursor-pointer flex items-center gap-1.5 text-xs">
+              <span className="text-rose-600 font-bold">Rx</span> Schedule H Drug (Prescription Required)
+            </label>
           </div>
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
             <button

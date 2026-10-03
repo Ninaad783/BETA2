@@ -15,7 +15,8 @@ import {
   MapPin,
   ExternalLink,
   Sparkles,
-  ShoppingCart
+  ShoppingCart,
+  Stethoscope
 } from 'lucide-react';
 import { useUIStore } from '../../../stores/uiStore';
 import { usePharmacyStore } from '../../../stores/pharmacyStore';
@@ -29,6 +30,8 @@ export const BillingPage: React.FC = () => {
     customers, 
     selectedCustomerId, 
     paymentMode, 
+    doctorName,
+    patientName,
     invoiceCounter,
     addItemToCart, 
     updateCartItemQty, 
@@ -36,6 +39,8 @@ export const BillingPage: React.FC = () => {
     clearCart, 
     setSelectedCustomerId, 
     setPaymentMode, 
+    setDoctorName,
+    setPatientName,
     checkoutCurrentBill,
     addCustomer
   } = usePharmacyStore();
@@ -138,7 +143,9 @@ export const BillingPage: React.FC = () => {
       `📍 Khed Shivapur Store #1, Pune\n` +
       `Invoice: *#${currentInvoiceNo}*\n` +
       `Date: ${new Date().toLocaleDateString('en-IN')}\n` +
-      `Customer: ${selectedCustomer?.fullName || 'Walk-in Customer'}\n` +
+      `Customer: ${selectedCustomer?.fullName || patientName || 'Walk-in Customer'}\n` +
+      (doctorName ? `Prescribing Dr: ${doctorName}\n` : '') +
+      (patientName && selectedCustomer ? `Patient: ${patientName}\n` : '') +
       `---------------------------------\n` +
       `*ITEMS PURCHASED:*\n` +
       `${itemsListText}\n` +
@@ -294,6 +301,32 @@ export const BillingPage: React.FC = () => {
             </button>
           </div>
 
+          {/* Schedule H / Doctor & Patient Details Bar */}
+          <div className="bg-white px-5 py-3 rounded-2xl border border-slate-200/90 shadow-xs flex flex-wrap items-center gap-3 text-xs">
+            <div className="flex items-center gap-1.5 text-slate-600 font-semibold shrink-0">
+              <Stethoscope className="w-3.5 h-3.5 text-rose-500" />
+              <span>Rx / Doctor:</span>
+            </div>
+            <div className="flex-1 min-w-[160px]">
+              <input
+                type="text"
+                value={doctorName}
+                onChange={(e) => setDoctorName(e.target.value)}
+                placeholder="Prescribing Doctor (e.g. Dr. Kulkarni MBBS)"
+                className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
+              />
+            </div>
+            <div className="flex-1 min-w-[160px]">
+              <input
+                type="text"
+                value={patientName}
+                onChange={(e) => setPatientName(e.target.value)}
+                placeholder="Patient Name (Optional)"
+                className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
+              />
+            </div>
+          </div>
+
           {/* Cart Table */}
           <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
             <table className="w-full text-left text-xs">
@@ -316,7 +349,16 @@ export const BillingPage: React.FC = () => {
                   cart.map((item, idx) => (
                     <tr key={item.id} className="hover:bg-slate-50/60 transition">
                       <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
-                      <td className="p-3 font-bold text-slate-900">{item.medicineName}</td>
+                      <td className="p-3 font-bold text-slate-900">
+                        <div className="flex items-center gap-1.5">
+                          <span>{item.medicineName}</span>
+                          {item.requiresPrescription && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-100 text-rose-700 border border-rose-200 uppercase tracking-wider">
+                              Rx Schedule H
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="p-3 font-mono text-xs bg-slate-50/80 px-2 py-0.5 rounded">
                         {item.batchNumber}
                       </td>
@@ -573,7 +615,9 @@ export const BillingPage: React.FC = () => {
             <div className="flex justify-between items-center text-[11px] border-b border-dashed border-slate-300 pb-2">
               <div>
                 <p>Inv: <strong>#{currentInvoiceNo}</strong></p>
-                <p>Customer: <strong>{selectedCustomer?.fullName || 'Walk-in Customer'}</strong></p>
+                <p>Customer: <strong>{selectedCustomer?.fullName || patientName || 'Walk-in Customer'}</strong></p>
+                {doctorName && <p>Dr: <strong>{doctorName}</strong></p>}
+                {patientName && selectedCustomer && <p>Patient: <strong>{patientName}</strong></p>}
               </div>
               <div className="text-right">
                 <p>Date: {new Date().toLocaleDateString('en-IN')}</p>
@@ -689,6 +733,9 @@ export const BillingPage: React.FC = () => {
               <p className="text-slate-500 text-[10px]">📍 Khed Shivapur Store #1, Pune</p>
               <p>Invoice: <strong>#{currentInvoiceNo}</strong></p>
               <p>Date: {new Date().toLocaleDateString('en-IN')}</p>
+              <p>Customer: <strong>{selectedCustomer?.fullName || patientName || 'Walk-in Customer'}</strong></p>
+              {doctorName && <p>👨‍⚕️ Prescribing Dr: <strong>{doctorName}</strong></p>}
+              {patientName && selectedCustomer && <p>Patient: <strong>{patientName}</strong></p>}
               <div className="border-t border-dashed border-slate-200 pt-1.5 space-y-1">
                 <p className="font-bold text-slate-600 text-[10px]">*ITEMS:*</p>
                 {cart.map((item, idx) => (

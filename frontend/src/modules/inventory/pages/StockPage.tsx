@@ -30,6 +30,9 @@ export const StockPage: React.FC = () => {
   const [editRack, setEditRack] = useState('');
   const [editMinStock, setEditMinStock] = useState(15);
   const [editUnit, setEditUnit] = useState('strip');
+  const [editHsn, setEditHsn] = useState('3004');
+  const [editManufacturer, setEditManufacturer] = useState('');
+  const [editRequiresPrescription, setEditRequiresPrescription] = useState(false);
 
   // Add Medicine Form
   const [name, setName] = useState('');
@@ -37,6 +40,9 @@ export const StockPage: React.FC = () => {
   const [category, setCategory] = useState('Analgesic');
   const [unit, setUnit] = useState('strip');
   const [minStockAlert, setMinStockAlert] = useState(15);
+  const [hsnCode, setHsnCode] = useState('3004');
+  const [manufacturer, setManufacturer] = useState('');
+  const [requiresPrescription, setRequiresPrescription] = useState(false);
   const [batchNumber, setBatchNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('2027-12-31');
   const [purchasePrice, setPurchasePrice] = useState(20);
@@ -49,7 +55,8 @@ export const StockPage: React.FC = () => {
     const matchesSearch = 
       m.name.toLowerCase().includes(localSearch.toLowerCase()) ||
       m.genericName.toLowerCase().includes(localSearch.toLowerCase()) ||
-      m.category.toLowerCase().includes(localSearch.toLowerCase());
+      m.category.toLowerCase().includes(localSearch.toLowerCase()) ||
+      (m.manufacturer && m.manufacturer.toLowerCase().includes(localSearch.toLowerCase()));
 
     if (!matchesSearch) return false;
 
@@ -80,7 +87,10 @@ export const StockPage: React.FC = () => {
         minStockAlert: Number(minStockAlert),
         gstRate: 12,
         sellingPrice: Number(sellingPrice),
-        mrp: Number(mrp)
+        mrp: Number(mrp),
+        hsnCode,
+        manufacturer,
+        requiresPrescription
       },
       {
         batchNumber,
@@ -96,6 +106,8 @@ export const StockPage: React.FC = () => {
     setName('');
     setGenericName('');
     setBatchNumber('');
+    setManufacturer('');
+    setRequiresPrescription(false);
   };
 
   const allCount = medicines.length;
@@ -110,6 +122,9 @@ export const StockPage: React.FC = () => {
     setEditRack(med.rackLocation || 'A-01');
     setEditMinStock(med.minStockAlert);
     setEditUnit(med.unit);
+    setEditHsn(med.hsnCode || '3004');
+    setEditManufacturer(med.manufacturer || '');
+    setEditRequiresPrescription(med.requiresPrescription || false);
   };
 
   const handleSaveEdit = (e: React.FormEvent) => {
@@ -121,7 +136,10 @@ export const StockPage: React.FC = () => {
       category: editCategory,
       rackLocation: editRack,
       minStockAlert: Number(editMinStock),
-      unit: editUnit
+      unit: editUnit,
+      hsnCode: editHsn,
+      manufacturer: editManufacturer,
+      requiresPrescription: editRequiresPrescription
     });
     setEditingMed(null);
   };
@@ -234,7 +252,19 @@ export const StockPage: React.FC = () => {
                   className="hover:bg-sky-50/40 cursor-pointer transition"
                 >
                   <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
-                  <td className="p-3 font-bold text-sky-700 hover:underline">{med.name}</td>
+                  <td className="p-3 font-bold text-sky-700 hover:underline">
+                    <div className="flex items-center gap-1.5">
+                      <span>{med.name}</span>
+                      {med.requiresPrescription && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-100 text-rose-700 border border-rose-200 uppercase tracking-wider">
+                          Rx H
+                        </span>
+                      )}
+                    </div>
+                    {med.manufacturer && (
+                      <span className="text-[10px] text-slate-400 font-normal block">{med.manufacturer}</span>
+                    )}
+                  </td>
                   <td className="p-3 text-slate-600">{med.genericName}</td>
                   <td className="p-3">
                     <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-medium">
@@ -373,6 +403,42 @@ export const StockPage: React.FC = () => {
                   className="w-full border border-slate-200 rounded-xl p-2 bg-white font-medium focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Manufacturer</label>
+                <input
+                  type="text"
+                  value={manufacturer}
+                  onChange={(e) => setManufacturer(e.target.value)}
+                  placeholder="e.g. Cipla Ltd, Micro Labs"
+                  className="w-full border border-slate-200 rounded-xl p-2 bg-white font-medium focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">HSN Code</label>
+                <input
+                  type="text"
+                  value={hsnCode}
+                  onChange={(e) => setHsnCode(e.target.value)}
+                  placeholder="3004"
+                  className="w-full border border-slate-200 rounded-xl p-2 bg-white font-medium font-mono focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="checkbox"
+                id="reqPresc"
+                checked={requiresPrescription}
+                onChange={(e) => setRequiresPrescription(e.target.checked)}
+                className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300"
+              />
+              <label htmlFor="reqPresc" className="font-semibold text-slate-700 cursor-pointer flex items-center gap-1.5">
+                <span className="text-rose-600 font-bold">Rx</span> Schedule H Drug (Prescription Required)
+              </label>
             </div>
           </div>
 
@@ -559,6 +625,42 @@ export const StockPage: React.FC = () => {
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Manufacturer</label>
+                <input
+                  type="text"
+                  value={editManufacturer}
+                  onChange={(e) => setEditManufacturer(e.target.value)}
+                  placeholder="e.g. Cipla Ltd, Micro Labs"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">HSN Code</label>
+                <input
+                  type="text"
+                  value={editHsn}
+                  onChange={(e) => setEditHsn(e.target.value)}
+                  placeholder="3004"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-mono font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="checkbox"
+                id="editReqPresc"
+                checked={editRequiresPrescription}
+                onChange={(e) => setEditRequiresPrescription(e.target.checked)}
+                className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300"
+              />
+              <label htmlFor="editReqPresc" className="font-semibold text-slate-700 cursor-pointer flex items-center gap-1.5">
+                <span className="text-rose-600 font-bold">Rx</span> Schedule H Drug (Prescription Required)
+              </label>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
