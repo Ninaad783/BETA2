@@ -14,10 +14,12 @@ import {
 } from 'lucide-react';
 import { useUIStore } from '../stores/uiStore';
 import { usePharmacyStore } from '../stores/pharmacyStore';
+import { useAuthStore } from '../stores/authStore';
 
 export const Sidebar: React.FC = () => {
   const { t } = useUIStore();
   const { stats } = usePharmacyStore();
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
   const navItems = [
@@ -78,10 +80,12 @@ export const Sidebar: React.FC = () => {
       <div className="p-3 bg-slate-950/70 border-t border-slate-800 text-xs flex items-center justify-between">
         <div className="flex items-center space-x-2.5">
           <div className="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center ring-2 ring-emerald-500/30">
-            R
+            {user?.fullName?.charAt(0) || 'R'}
           </div>
           <div>
-            <p className="text-white font-semibold">Rahul (Admin)</p>
+            <p className="text-white font-semibold truncate max-w-[120px]">
+              {user ? `${user.fullName} (${user.role})` : 'Rahul Patil (Admin)'}
+            </p>
             <p className="text-[11px] text-emerald-400 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
               Online
@@ -89,9 +93,12 @@ export const Sidebar: React.FC = () => {
           </div>
         </div>
         <button
-          onClick={() => navigate('/login')}
+          onClick={() => {
+            logout();
+            navigate('/login');
+          }}
           title="Logout"
-          className="text-slate-400 hover:text-rose-400 p-1.5 rounded-md hover:bg-slate-800 transition"
+          className="text-slate-400 hover:text-rose-400 p-1.5 rounded-md hover:bg-slate-800 transition cursor-pointer"
         >
           <LogOut className="w-4 h-4" />
         </button>

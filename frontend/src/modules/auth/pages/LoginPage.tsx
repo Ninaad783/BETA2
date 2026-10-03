@@ -1,22 +1,29 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, User, Lock, ArrowRight } from 'lucide-react';
+import { Plus, User, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 import { useUIStore } from '../../../stores/uiStore';
+import { useAuthStore } from '../../../stores/authStore';
 
 export const LoginPage: React.FC = () => {
   const { language, setLanguage, t } = useUIStore();
+  const { login, isLoading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
+
   const [username, setUsername] = useState('admin_rahul');
   const [password, setPassword] = useState('password123');
-  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    clearError();
+    setErrorMessage(null);
+
+    const result = await login(username, password);
+    if (result.success) {
       navigate('/dashboard');
-    }, 400);
+    } else {
+      setErrorMessage(result.message || 'Login failed. Please verify credentials.');
+    }
   };
 
   return (
@@ -64,6 +71,14 @@ export const LoginPage: React.FC = () => {
           </p>
         </div>
 
+        {/* Error Alert Banner */}
+        {(errorMessage || error) && (
+          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+            <span>{errorMessage || error}</span>
+          </div>
+        )}
+
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -106,10 +121,10 @@ export const LoginPage: React.FC = () => {
           <div className="pt-2">
             <button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold text-sm shadow-md shadow-emerald-600/20 transition cursor-pointer flex items-center justify-center gap-2"
             >
-              <span>{loading ? 'Logging in...' : t('loginToCounter')}</span>
+              <span>{isLoading ? 'Verifying...' : t('loginToCounter')}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

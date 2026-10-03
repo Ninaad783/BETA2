@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppLayout } from '../../layouts/AppLayout';
+import { ProtectedRoute } from '../../components/auth/ProtectedRoute';
 import { SuppliersPage } from '../../modules/suppliers/pages/SuppliersPage';
 import { LoginPage } from '../../modules/auth/pages/LoginPage';
 import { DashboardPage } from '../../modules/dashboard/pages/DashboardPage';
@@ -17,26 +18,28 @@ export const AppRouter: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Protected App Shell Layout (Default Root is Pharmacy App Dashboard) */}
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/billing" element={<BillingPage />} />
-          <Route path="/stock" element={<StockPage />} />
-          <Route path="/stock/:id" element={<MedicineDetailsPage />} />
-          <Route path="/purchases" element={<PurchasePage />} />
-          <Route path="/suppliers" element={<SuppliersPage />} />
-          <Route path="/customers" element={<CustomersPage />} />
-          <Route path="/customers/:id" element={<CustomerDetailsPage />} />
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+        {/* Protected App Shell Layout (Guarded by ProtectedRoute) */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/billing" element={<BillingPage />} />
+            <Route path="/stock" element={<StockPage />} />
+            <Route path="/stock/:id" element={<MedicineDetailsPage />} />
+            <Route path="/purchases" element={<PurchasePage />} />
+            <Route path="/suppliers" element={<SuppliersPage />} />
+            <Route path="/customers" element={<CustomersPage />} />
+            <Route path="/customers/:id" element={<CustomerDetailsPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
         </Route>
 
         {/* Public Login Route */}
         <Route path="/login" element={<LoginPage />} />
 
         {/* Fallbacks */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );
