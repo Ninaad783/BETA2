@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { pool } from "./db";
+import { authRouter } from "./routes/auth.routes";
 
 dotenv.config();
 
@@ -12,7 +13,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Health check
+// Base Health Check
 app.get("/api/health", (_req, res) => {
   res.json({
     success: true,
@@ -21,7 +22,7 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
-// Database connectivity check
+// Database Health Check
 app.get("/api/db/health", async (_req, res) => {
   try {
     const result = await pool.query("SELECT NOW() as db_time, current_database() as database_name;");
@@ -41,7 +42,10 @@ app.get("/api/db/health", async (_req, res) => {
   }
 });
 
+// Authentication Routes
+app.use("/api/auth", authRouter);
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`MedEasy backend running on http://localhost:${PORT}`);
+  console.log(`MedEasy Pharmacy OS backend running on http://localhost:${PORT}`);
 });
