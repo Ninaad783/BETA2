@@ -7,14 +7,16 @@ import type {
   MedicineBatch, 
   PaymentMode, 
   PurchaseInvoice, 
-  Supplier 
+  Supplier,
+  StockAdjustment 
 } from '../types/pharmacy.types';
 import { 
   INITIAL_CUSTOMERS, 
   INITIAL_MEDICINES, 
   INITIAL_PURCHASES, 
   INITIAL_STATS, 
-  INITIAL_SUPPLIERS 
+  INITIAL_SUPPLIERS,
+  INITIAL_STOCK_ADJUSTMENTS
 } from '../lib/mockData';
 
 interface PharmacyState {
@@ -23,6 +25,7 @@ interface PharmacyState {
   selectedMedicineId: string | null;
   stockFilterTab: 'all' | 'low' | 'expiry';
   searchQuery: string;
+  stockAdjustments: StockAdjustment[];
 
   // POS / Cart
   cart: CartItem[];
@@ -38,7 +41,7 @@ interface PharmacyState {
   suppliers: Supplier[];
   purchases: PurchaseInvoice[];
 
-  // Daily Dashboard Stats
+  // Daily Dashboard Stats (v_today_counter_analytics)
   stats: DailyStats;
 
   // Actions
@@ -57,7 +60,7 @@ interface PharmacyState {
   setDoctorName: (name: string) => void;
   setPatientName: (name: string) => void;
 
-  // Checkout (FEFO stock deduction + customer due update)
+  // Checkout (FEFO stock deduction + customer purchase history update)
   checkoutCurrentBill: () => { success: boolean; invoiceNumber: string; total: number };
 
   // Medicine & Batch actions
@@ -67,12 +70,10 @@ interface PharmacyState {
   addBatchToMedicine: (medicineId: string, batchData: Omit<MedicineBatch, 'id' | 'medicineId'>) => void;
 
   // Customer actions
-  addCustomer: (customer: Omit<Customer, 'id' | 'totalPurchases' | 'currentDue' | 'totalBills' | 'lastPurchaseDate'>) => void;
-  settleCustomerDue: (customerId: string, amount: number) => void;
+  addCustomer: (customer: Omit<Customer, 'id' | 'totalPurchases' | 'totalBills' | 'lastPurchaseDate'>) => void;
 
   // Supplier actions
-  addSupplier: (supplier: Omit<Supplier, 'id' | 'currentDue'>) => void;
-  settleSupplierDue: (supplierId: string, amount: number) => void;
+  addSupplier: (supplier: Omit<Supplier, 'id'>) => void;
 
   // Purchase actions
   addPurchase: (purchase: Omit<PurchaseInvoice, 'id'>) => void;
@@ -80,52 +81,56 @@ interface PharmacyState {
 
 export const usePharmacyStore = create<PharmacyState>((set, get) => ({
   medicines: INITIAL_MEDICINES,
-  selectedMedicineId: 'med-1',
+  selectedMedicineId: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380d01',
   stockFilterTab: 'all',
   searchQuery: '',
+  stockAdjustments: INITIAL_STOCK_ADJUSTMENTS,
 
   cart: [
     {
       id: 'cart-1',
-      medicineId: 'med-1',
+      medicineId: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380d01',
       medicineName: 'Dolo 650',
-      batchId: 'batch-1',
+      batchId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01',
       batchNumber: 'D1234',
       expiryDate: '08/2027',
       mrp: 35.00,
       sellingPrice: 32.00,
       quantity: 2,
       discountPercent: 0,
-      total: 64.00
+      total: 64.00,
+      requiresPrescription: false
     },
     {
       id: 'cart-2',
-      medicineId: 'med-2',
+      medicineId: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380d02',
       medicineName: 'Pantoprazole 40',
-      batchId: 'batch-3',
+      batchId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e03',
       batchNumber: 'P4567',
       expiryDate: '01/2027',
       mrp: 120.00,
       sellingPrice: 105.00,
       quantity: 1,
       discountPercent: 0,
-      total: 105.00
+      total: 105.00,
+      requiresPrescription: false
     },
     {
       id: 'cart-3',
-      medicineId: 'med-3',
+      medicineId: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03',
       medicineName: 'Azithromycin 500',
-      batchId: 'batch-4',
+      batchId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e04',
       batchNumber: 'A7890',
       expiryDate: '06/2026',
       mrp: 95.00,
       sellingPrice: 90.00,
       quantity: 1,
       discountPercent: 0,
-      total: 90.00
+      total: 90.00,
+      requiresPrescription: true
     }
   ],
-  selectedCustomerId: 'cust-1',
+  selectedCustomerId: 'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380f01',
   paymentMode: 'CASH',
   notes: '',
   doctorName: '',
@@ -217,7 +222,7 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
   setNotes: (notes) => set({ notes: notes }),
 
   checkoutCurrentBill: () => {
-    const { cart, paymentMode, selectedCustomerId, medicines, customers, stats, invoiceCounter } = get();
+    const { cart, selectedCustomerId, medicines, customers, stats, invoiceCounter } = get();
     if (cart.length === 0) return { success: false, invoiceNumber: '', total: 0 };
 
     const total = cart.reduce((sum, item) => sum + item.total, 0);
@@ -250,15 +255,14 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
       };
     });
 
-    // 2. If payment is Udhaar (CREDIT_UDHAAR), update customer currentDue
+    // 2. Update customer statistics only (no Udhaar ledger)
     let updatedCustomers = customers;
-    if (paymentMode === 'CREDIT_UDHAAR' && selectedCustomerId) {
+    if (selectedCustomerId) {
       updatedCustomers = customers.map((c) => {
         if (c.id === selectedCustomerId) {
           return {
             ...c,
-            currentDue: c.currentDue + total,
-            totalPurchases: c.totalPurchases + total,
+            totalPurchases: Number((c.totalPurchases + total).toFixed(2)),
             totalBills: c.totalBills + 1,
             lastPurchaseDate: 'Today'
           };
@@ -267,13 +271,12 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
       });
     }
 
-    // 3. Update dashboard stats
+    // 3. Update dashboard stats (v_today_counter_analytics)
     const updatedStats: DailyStats = {
       ...stats,
-      todaySales: stats.todaySales + total,
-      todayProfit: stats.todayProfit + Number((total * 0.20).toFixed(2)),
-      todayBillsCount: stats.todayBillsCount + 1,
-      customerDuesTotal: paymentMode === 'CREDIT_UDHAAR' ? stats.customerDuesTotal + total : stats.customerDuesTotal
+      todaySales: Number((stats.todaySales + total).toFixed(2)),
+      todayProfit: Number((stats.todayProfit + total * 0.20).toFixed(2)),
+      todayBillsCount: stats.todayBillsCount + 1
     };
 
     set({
@@ -346,12 +349,19 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
     });
   },
 
-  adjustBatchStock: (medicineId, batchNumber, newStock, _reason) => {
+  adjustBatchStock: (medicineId, batchNumber, newStock, reason) => {
     set((state) => {
+      let prevStock = 0;
+      let matchedMedName = '';
+      let matchedBatchId = '';
+
       const updatedMedicines = state.medicines.map((med) => {
         if (med.id === medicineId) {
+          matchedMedName = med.name;
           const updatedBatches = med.batches.map((b) => {
             if (b.batchNumber === batchNumber) {
+              prevStock = b.currentStock;
+              matchedBatchId = b.id;
               return { ...b, currentStock: Math.max(0, newStock) };
             }
             return b;
@@ -367,9 +377,25 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
         }
         return med;
       });
+
+      const adjustmentLog: StockAdjustment = {
+        id: `sa-${Date.now()}`,
+        medicineId,
+        medicineName: matchedMedName || 'Medicine',
+        batchId: matchedBatchId || 'batch',
+        batchNumber,
+        previousStock: prevStock,
+        adjustedStock: newStock,
+        differenceQty: newStock - prevStock,
+        reason: reason || 'Manual Physical Audit Adjustment',
+        adjustedBy: 'Rahul Patil (Admin)',
+        createdAt: new Date().toLocaleString('en-IN')
+      };
+
       const lowStockCount = updatedMedicines.filter((m) => m.status === 'LOW_STOCK' || m.status === 'OUT_OF_STOCK').length;
       return {
         medicines: updatedMedicines,
+        stockAdjustments: [adjustmentLog, ...state.stockAdjustments],
         stats: {
           ...state.stats,
           lowStockCount
@@ -416,42 +442,26 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
       ...customerData,
       id: `cust-${Date.now()}`,
       totalPurchases: 0,
-      currentDue: 0,
       totalBills: 0,
-      lastPurchaseDate: 'None'
+      lastPurchaseDate: 'None',
+      isActive: true
     };
 
     set((state) => ({
-      customers: [newCustomer, ...state.customers]
+      customers: [newCustomer, ...state.customers],
+      stats: {
+        ...state.stats,
+        totalCustomersCount: state.stats.totalCustomersCount + 1
+      }
     }));
-  },
-
-  settleCustomerDue: (customerId, amount) => {
-    set((state) => {
-      const updatedCustomers = state.customers.map((c) => {
-        if (c.id === customerId) {
-          const newDue = Math.max(0, c.currentDue - amount);
-          return { ...c, currentDue: newDue };
-        }
-        return c;
-      });
-
-      const updatedDueTotal = Math.max(0, state.stats.customerDuesTotal - amount);
-
-      return {
-        customers: updatedCustomers,
-        stats: {
-          ...state.stats,
-          customerDuesTotal: updatedDueTotal
-        }
-      };
-    });
   },
 
   addPurchase: (purchaseData) => {
     const newPurchase: PurchaseInvoice = {
       ...purchaseData,
-      id: `pur-${Date.now()}`
+      id: `pur-${Date.now()}`,
+      lineCount: purchaseData.items.length,
+      totalUnits: purchaseData.items.reduce((sum, item) => sum + item.quantity + (item.freeQuantity || 0), 0)
     };
 
     // Increment stocks for items in purchase
@@ -464,10 +474,11 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
       let newBatches = [...med.batches];
 
       matchingItems.forEach((pi) => {
-        addedStock += pi.quantity;
+        const itemQty = pi.quantity + (pi.freeQuantity || 0);
+        addedStock += itemQty;
         const existingBatch = newBatches.find((b) => b.batchNumber === pi.batchNumber);
         if (existingBatch) {
-          existingBatch.currentStock += pi.quantity;
+          existingBatch.currentStock += itemQty;
         } else {
           newBatches.push({
             id: `batch-${Date.now()}-${pi.batchNumber}`,
@@ -476,8 +487,9 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
             expiryDate: pi.expiryDate,
             purchasePrice: pi.purchasePrice,
             mrp: pi.mrp,
-            sellingPrice: pi.mrp * 0.9,
-            currentStock: pi.quantity,
+            sellingPrice: pi.sellingPrice || pi.mrp * 0.9,
+            currentStock: itemQty,
+            initialStock: itemQty,
             isServing: false
           });
         }
@@ -497,7 +509,7 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
       medicines: updatedMedicines,
       stats: {
         ...state.stats,
-        todayPurchaseTotal: state.stats.todayPurchaseTotal + purchaseData.totalAmount
+        todayPurchaseTotal: Number((state.stats.todayPurchaseTotal + purchaseData.netTotal).toFixed(2))
       }
     }));
   },
@@ -506,24 +518,14 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
     const newSupplier: Supplier = {
       ...supplierData,
       id: `sup-${Date.now()}`,
-      currentDue: 0
+      isActive: true
     };
     set((state) => ({
-      suppliers: [newSupplier, ...state.suppliers]
-    }));
-  },
-
-  settleSupplierDue: (supplierId, amount) => {
-    set((state) => ({
-      suppliers: state.suppliers.map((s) => {
-        if (s.id === supplierId) {
-          return {
-            ...s,
-            currentDue: Math.max(0, s.currentDue - amount)
-          };
-        }
-        return s;
-      })
+      suppliers: [newSupplier, ...state.suppliers],
+      stats: {
+        ...state.stats,
+        totalSuppliersCount: state.stats.totalSuppliersCount + 1
+      }
     }));
   }
 }));

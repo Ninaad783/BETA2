@@ -1,6 +1,10 @@
-export type Role = 'ADMIN' | 'STAFF';
+export type UserRole = 'ADMIN' | 'PHARMACIST' | 'STAFF';
 
-export type PaymentMode = 'CASH' | 'UPI' | 'CARD' | 'CREDIT_UDHAAR';
+export type PaymentMode = 'CASH' | 'UPI' | 'CARD';
+
+export type PurchasePaymentMode = 'CASH' | 'UPI' | 'CARD' | 'BANK_TRANSFER';
+
+export type PurchaseStatus = 'RECEIVED' | 'CANCELLED';
 
 export type StockStatus = 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
 
@@ -14,6 +18,7 @@ export interface MedicineBatch {
   mrp: number;
   sellingPrice: number;
   currentStock: number;
+  initialStock?: number;
   isServing?: boolean;
 }
 
@@ -51,15 +56,16 @@ export interface CartItem {
   requiresPrescription?: boolean;
 }
 
+// Customers - No Udhaar/Credit fields. Customer data is only for bill identity and purchase history.
 export interface Customer {
   id: string;
   fullName: string;
   mobile: string;
   address?: string;
   totalPurchases: number;
-  currentDue: number;
-  lastPurchaseDate: string;
   totalBills: number;
+  lastPurchaseDate: string;
+  isActive?: boolean;
 }
 
 export interface CustomerInvoiceItem {
@@ -69,18 +75,10 @@ export interface CustomerInvoiceItem {
   medicinesSummary: string;
   amount: number;
   paymentMode: PaymentMode;
-  isPaid: boolean;
+  status: 'COMPLETED' | 'CANCELLED';
 }
 
-export interface CustomerPaymentReceipt {
-  id: string;
-  receiptNumber: string;
-  date: string;
-  amount: number;
-  paymentMode: PaymentMode;
-  note?: string;
-}
-
+// Suppliers - No Udhaar/Credit balance stored. Invoices are paid at purchase.
 export interface Supplier {
   id: string;
   name: string;
@@ -90,30 +88,67 @@ export interface Supplier {
   gstin?: string;
   dlNumber?: string;
   address?: string;
-  currentDue: number;
+  isActive?: boolean;
 }
 
-export interface PurchaseItemEntry {
+// Purchase Invoice Line Items - Permanent purchase history snapshot
+export interface PurchaseInvoiceItem {
   id: string;
+  purchaseInvoiceId?: string;
+  lineNumber: number;
+  medicineId?: string;
+  batchId?: string;
   medicineName: string;
   batchNumber: string;
   expiryDate: string;
   purchasePrice: number;
   mrp: number;
+  sellingPrice: number;
   quantity: number;
-  total: number;
+  freeQuantity?: number;
+  gstRate?: number;
+  discountAmount?: number;
+  taxableAmount?: number;
+  gstAmount?: number;
+  totalAmount: number;
 }
 
+// Purchase Invoices - Proper Purchase History
 export interface PurchaseInvoice {
   id: string;
-  invoiceNumber: string;
+  supplierId?: string;
   supplierName: string;
-  date: string;
-  totalAmount: number;
-  paymentStatus: 'PAID' | 'CREDIT';
-  items: PurchaseItemEntry[];
+  supplierInvoiceNumber: string;
+  purchaseDate: string;
+  subtotal: number;
+  discountAmount: number;
+  taxableAmount: number;
+  gstAmount: number;
+  netTotal: number;
+  paymentMode: PurchasePaymentMode;
+  status: PurchaseStatus;
+  notes?: string;
+  items: PurchaseInvoiceItem[];
+  lineCount?: number;
+  totalUnits?: number;
 }
 
+// Stock Adjustment Audit Log
+export interface StockAdjustment {
+  id: string;
+  medicineId: string;
+  medicineName: string;
+  batchId: string;
+  batchNumber: string;
+  previousStock: number;
+  adjustedStock: number;
+  differenceQty: number;
+  reason: string;
+  adjustedBy?: string;
+  createdAt: string;
+}
+
+// Counter Analytics matching v_today_counter_analytics
 export interface DailyStats {
   todaySales: number;
   todaySalesChangePercent: number;
@@ -121,11 +156,11 @@ export interface DailyStats {
   todayProfitChangePercent: number;
   todayBillsCount: number;
   todayBillsChangePercent: number;
-  customerDuesTotal: number;
-  pendingDueCustomersCount: number;
+  todayPurchaseTotal: number;
   lowStockCount: number;
   expiringSoonBatchesCount: number;
   expiringSoonValue: number;
-  todayPurchaseTotal: number;
   totalMedicinesCount: number;
+  totalCustomersCount: number;
+  totalSuppliersCount: number;
 }

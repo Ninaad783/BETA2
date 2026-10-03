@@ -52,7 +52,6 @@ export const BillingPage: React.FC = () => {
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showEmptyCartModal, setShowEmptyCartModal] = useState(false);
-  const [showUdhaarCustomerRequiredModal, setShowUdhaarCustomerRequiredModal] = useState(false);
 
   // Selected customer details
   const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
@@ -93,11 +92,6 @@ export const BillingPage: React.FC = () => {
       return;
     }
 
-    if (paymentMode === 'CREDIT_UDHAAR' && !selectedCustomerId) {
-      setShowUdhaarCustomerRequiredModal(true);
-      return;
-    }
-
     if (actionType === 'print') {
       setShowPrintModal(true);
     } else if (actionType === 'whatsapp') {
@@ -114,11 +108,6 @@ export const BillingPage: React.FC = () => {
   };
 
   const handleConfirmPrint = () => {
-    if (paymentMode === 'CREDIT_UDHAAR' && !selectedCustomerId) {
-      setShowPrintModal(false);
-      setShowUdhaarCustomerRequiredModal(true);
-      return;
-    }
     const result = checkoutCurrentBill();
     if (result.success) {
       setLastCheckoutData({ invoiceNumber: result.invoiceNumber, total: result.total });
@@ -128,11 +117,6 @@ export const BillingPage: React.FC = () => {
   };
 
   const handleConfirmWhatsApp = () => {
-    if (paymentMode === 'CREDIT_UDHAAR' && !selectedCustomerId) {
-      setShowWhatsAppModal(false);
-      setShowUdhaarCustomerRequiredModal(true);
-      return;
-    }
     const targetMobile = whatsappMobile || selectedCustomer?.mobile || '9876543210';
     const itemsListText = cart
       .map((item, idx) => `${idx + 1}. ${item.medicineName} (${item.quantity}x) - ₹${item.total.toFixed(2)}`)
@@ -287,7 +271,7 @@ export const BillingPage: React.FC = () => {
                 <option value="">{t('walkInCustomer')}</option>
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.fullName} (Mob: {c.mobile}) {c.currentDue > 0 ? `— Dues: ₹${c.currentDue}` : ''}
+                    {c.fullName} (Mob: {c.mobile}) — {c.totalBills} bills
                   </option>
                 ))}
               </select>
@@ -433,50 +417,42 @@ export const BillingPage: React.FC = () => {
               <label className="block text-xs font-semibold text-slate-700 mb-2">
                 {t('paymentMode')}:
               </label>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-3 gap-2 text-xs">
                 <button
                   type="button"
                   onClick={() => setPaymentMode('CASH')}
-                  className={`p-2.5 rounded-lg border text-left font-semibold transition flex items-center gap-2 cursor-pointer ${
+                  className={`p-2.5 rounded-xl border text-center font-semibold transition flex flex-col items-center justify-center gap-1 cursor-pointer ${
                     paymentMode === 'CASH'
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-400 ring-1 ring-emerald-300'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-400 ring-2 ring-emerald-300'
                       : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                   }`}
                 >
-                  <span>💵</span> <span>{t('cash')}</span>
+                  <span className="text-base">💵</span>
+                  <span>{t('cash')}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setPaymentMode('UPI')}
-                  className={`p-2.5 rounded-lg border text-left font-semibold transition flex items-center gap-2 cursor-pointer ${
+                  className={`p-2.5 rounded-xl border text-center font-semibold transition flex flex-col items-center justify-center gap-1 cursor-pointer ${
                     paymentMode === 'UPI'
-                      ? 'bg-sky-50 text-sky-800 border-sky-400 ring-1 ring-sky-300'
+                      ? 'bg-sky-50 text-sky-800 border-sky-400 ring-2 ring-sky-300'
                       : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                   }`}
                 >
-                  <span>📱</span> <span>{t('upi')}</span>
+                  <span className="text-base">📱</span>
+                  <span>{t('upi')}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setPaymentMode('CARD')}
-                  className={`p-2.5 rounded-lg border text-left font-semibold transition flex items-center gap-2 cursor-pointer ${
+                  className={`p-2.5 rounded-xl border text-center font-semibold transition flex flex-col items-center justify-center gap-1 cursor-pointer ${
                     paymentMode === 'CARD'
-                      ? 'bg-indigo-50 text-indigo-800 border-indigo-400 ring-1 ring-indigo-300'
+                      ? 'bg-indigo-50 text-indigo-800 border-indigo-400 ring-2 ring-indigo-300'
                       : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                   }`}
                 >
-                  <span>💳</span> <span>{t('card')}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode('CREDIT_UDHAAR')}
-                  className={`p-2.5 rounded-lg border text-left font-semibold transition flex items-center gap-2 cursor-pointer ${
-                    paymentMode === 'CREDIT_UDHAAR'
-                      ? 'bg-rose-50 text-rose-800 border-rose-400 ring-1 ring-rose-300'
-                      : 'border-rose-200 text-rose-700 hover:bg-rose-50/50'
-                  }`}
-                >
-                  <span>📒</span> <span>{t('creditUdhaar')}</span>
+                  <span className="text-base">💳</span>
+                  <span>{t('card')}</span>
                 </button>
               </div>
             </div>
@@ -500,20 +476,6 @@ export const BillingPage: React.FC = () => {
                 <span className="text-2xl font-black text-emerald-600">₹{netTotal.toFixed(2)}</span>
               </div>
             </div>
-
-            {/* Udhaar Warning Box */}
-            {paymentMode === 'CREDIT_UDHAAR' && selectedCustomer && (
-              <div className="mt-3.5 p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold">Customer Udhaar Account Active</p>
-                  <p className="text-[11px] mt-0.5">
-                    Previous due: <strong>₹{selectedCustomer.currentDue}</strong>. New balance will be{' '}
-                    <strong>₹{(selectedCustomer.currentDue + netTotal).toFixed(2)}</strong>.
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Action Buttons */}
@@ -899,43 +861,6 @@ export const BillingPage: React.FC = () => {
         )}
       </Modal>
 
-      {/* Customer Required for Udhaar Modal */}
-      <Modal
-        isOpen={showUdhaarCustomerRequiredModal}
-        onClose={() => setShowUdhaarCustomerRequiredModal(false)}
-        title="Customer Required for Udhaar"
-        subtitle="Credit bills cannot be assigned to an anonymous walk-in customer"
-        maxWidth="max-w-md"
-        icon={<AlertCircle className="w-5 h-5 text-rose-600" />}
-        iconBg="bg-rose-50 border-rose-200"
-      >
-        <div className="space-y-4 pt-1 text-xs">
-          <div className="p-3.5 bg-rose-50/70 border border-rose-200 rounded-xl space-y-1">
-            <p className="font-bold text-rose-800">Udhaar Ledger Tracking Active</p>
-            <p className="text-slate-600 leading-relaxed">
-              You selected <strong>Credit / Udhaar (खाते)</strong> as the payment mode. To maintain an accurate legal Udhaar record, please select a registered customer from the dropdown above or add a new customer now.
-            </p>
-          </div>
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-            <button
-              onClick={() => setShowUdhaarCustomerRequiredModal(false)}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 rounded-xl hover:bg-slate-100 transition cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => {
-                setShowUdhaarCustomerRequiredModal(false);
-                setShowNewCustomerModal(true);
-              }}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition shadow-xs cursor-pointer flex items-center gap-1.5"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>+ Add New Customer</span>
-            </button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };

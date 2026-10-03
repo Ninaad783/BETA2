@@ -26,7 +26,7 @@ export const Sidebar: React.FC = () => {
     { to: '/stock', label: t('navStock'), icon: Pill, badge: stats.lowStockCount, badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-500/30' },
     { to: '/purchases', label: t('navPurchases'), icon: PackagePlus },
     { to: '/suppliers', label: t('navSuppliers'), icon: Truck },
-    { to: '/customers', label: t('navUdhaar'), icon: Users, badge: stats.pendingDueCustomersCount, badgeColor: 'bg-rose-500/20 text-rose-300 border border-rose-500/30' },
+    { to: '/customers', label: t('navCustomers'), icon: Users },
     { to: '/reports', label: t('navReports'), icon: BarChart3 },
     { to: '/settings', label: t('navSettings'), icon: Settings },
   ];

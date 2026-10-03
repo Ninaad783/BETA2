@@ -132,11 +132,10 @@ export const TopHeader: React.FC = () => {
                           </div>
                         </div>
                         <div className="text-right">
-                          {cust.currentDue > 0 ? (
-                            <span className="text-rose-600 font-bold">Due: ₹{cust.currentDue}</span>
-                          ) : (
-                            <span className="text-emerald-600 font-medium">Cleared</span>
-                          )}
+                          <span className="text-slate-700 font-semibold font-mono text-[11px]">
+                            ₹{cust.totalPurchases.toLocaleString('en-IN')}
+                          </span>
+                          <span className="text-[10px] text-slate-400 block">{cust.totalBills} bills</span>
                         </div>
                       </div>
                     ))}
@@ -222,17 +221,17 @@ export const TopHeader: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Udhaar Alert */}
+                {/* Customer Base Overview */}
                 <div className="p-3.5 hover:bg-sky-50/50 flex gap-3 transition">
                   <div className="w-8 h-8 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
                     <Users className="w-4 h-4" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-slate-900">Customer Dues Pending</p>
+                    <p className="font-bold text-slate-900">Registered Customer Profiles</p>
                     <p className="text-slate-600 text-[11px] mt-0.5">
-                      {stats.pendingDueCustomersCount} customers have outstanding balances totaling <strong className="text-slate-900">₹{stats.customerDuesTotal}</strong>.
+                      {stats.totalCustomersCount} active customer profiles for fast bill identification and purchase tracking.
                     </p>
-                    <span className="text-[10px] text-sky-700 font-semibold mt-1 inline-block">Action: Send WhatsApp reminders</span>
+                    <span className="text-[10px] text-sky-700 font-semibold mt-1 inline-block">Counter directory active</span>
                   </div>
                 </div>
 

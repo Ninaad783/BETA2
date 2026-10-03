@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, 
   Receipt, 
-  AlertTriangle, 
   Clock, 
   Package, 
   ShoppingBag, 
@@ -164,31 +163,31 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Customer Due (Udhaar) */}
-        <div className="bg-white p-5 rounded-2xl border border-rose-200/90 shadow-xs hover:border-rose-300 hover:shadow-md transition flex flex-col justify-between">
+        {/* Today's Inward Purchases (v_today_counter_analytics) */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-md transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider flex items-center gap-1.5">
-              <span>{t('customerDue')}</span>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <span>{t('todaysPurchase')}</span>
             </span>
-            <span className="w-7 h-7 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
-              <AlertTriangle className="w-4 h-4" />
+            <span className="w-7 h-7 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600">
+              <ShoppingBag className="w-4 h-4" />
             </span>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-rose-600 tracking-tight">
-              ₹{stats.customerDuesTotal.toLocaleString('en-IN')}
+            <span className="text-2xl font-bold text-slate-900 tracking-tight font-mono">
+              ₹{stats.todayPurchaseTotal.toLocaleString('en-IN')}
             </span>
             <button
-              onClick={() => navigate('/customers')}
-              className="text-xs font-semibold text-rose-700 hover:text-rose-900 underline flex items-center gap-0.5 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100 cursor-pointer"
+              onClick={() => navigate('/purchases')}
+              className="text-xs font-semibold text-sky-700 hover:text-sky-900 underline flex items-center gap-0.5 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100 cursor-pointer"
             >
-              <span>View list</span>
+              <span>Invoices</span>
               <ArrowUpRight className="w-3 h-3" />
             </button>
           </div>
-          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-rose-600/80 font-medium">
-            <span>{stats.pendingDueCustomersCount} customers with pending balance</span>
-            <span className="text-rose-600 font-bold">Udhaar</span>
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
+            <span>Stock Inward Received</span>
+            <span className="text-sky-600 font-semibold">100% Settled</span>
           </div>
         </div>
       </div>
@@ -234,21 +233,21 @@ export const DashboardPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Today's Purchase */}
+        {/* Customer Base Profile Card */}
         <div className="bg-white border-l-4 border-l-sky-500 border border-slate-200/90 p-4 rounded-xl shadow-xs flex items-center justify-between hover:shadow-sm transition">
           <div>
             <span className="text-xs font-bold text-sky-900 flex items-center gap-1">
-              📦 {t('todaysPurchase')}
+              👥 {t('totalCustomers')}
             </span>
             <span className="text-lg font-bold text-sky-700 mt-0.5 block">
-              ₹{stats.todayPurchaseTotal.toLocaleString('en-IN')}
+              {stats.totalCustomersCount} <span className="text-xs font-normal text-sky-800">active buyers</span>
             </span>
           </div>
           <button
-            onClick={() => navigate('/purchases')}
+            onClick={() => navigate('/customers')}
             className="px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200/80 rounded-lg text-xs font-semibold transition cursor-pointer"
           >
-            Invoices
+            Directory
           </button>
         </div>
 
