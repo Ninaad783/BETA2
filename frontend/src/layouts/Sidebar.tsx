@@ -9,14 +9,15 @@ import {
   Users, 
   Settings, 
   LogOut,
-  Plus
+  Plus,
+  PanelLeftClose
 } from 'lucide-react';
 import { useUIStore } from '../stores/uiStore';
 import { usePharmacyStore } from '../stores/pharmacyStore';
 import { useAuthStore } from '../stores/authStore';
 
 export const Sidebar: React.FC = () => {
-  const { t } = useUIStore();
+  const { t, sidebarOpen, toggleSidebar } = useUIStore();
   const { stats } = usePharmacyStore();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
@@ -32,16 +33,29 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 border-r border-slate-800 select-none">
-      {/* Brand Header */}
-      <div className="p-4 border-b border-slate-800 flex items-center space-x-3">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-sky-500 flex items-center justify-center text-white font-black text-xl shadow-md">
-          <Plus className="w-5 h-5 stroke-[3]" />
+    <aside 
+      className={`bg-slate-900 text-slate-300 flex flex-col shrink-0 border-r border-slate-800 select-none transition-all duration-300 ease-in-out ${
+        sidebarOpen ? 'w-64' : 'w-0 border-none opacity-0 overflow-hidden'
+      }`}
+    >
+      {/* Brand Header with Toggle Close Button */}
+      <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-sky-500 flex items-center justify-center text-white font-black text-xl shadow-md">
+            <Plus className="w-5 h-5 stroke-[3]" />
+          </div>
+          <div>
+            <h2 className="text-white font-bold text-base leading-tight tracking-wide">MedEasy</h2>
+            <p className="text-xs text-emerald-400 font-medium">Khed Shivapur</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-white font-bold text-base leading-tight tracking-wide">MedEasy</h2>
-          <p className="text-xs text-emerald-400 font-medium">Khed Shivapur</p>
-        </div>
+        <button
+          onClick={toggleSidebar}
+          className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+          title="Hide side panel"
+        >
+          <PanelLeftClose className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Navigation List */}
