@@ -7,7 +7,6 @@ import {
   PackagePlus, 
   Truck,
   Users, 
-  BarChart3, 
   Settings, 
   LogOut,
   Plus
@@ -29,7 +28,6 @@ export const Sidebar: React.FC = () => {
     { to: '/purchases', label: t('navPurchases'), icon: PackagePlus },
     { to: '/suppliers', label: t('navSuppliers'), icon: Truck },
     { to: '/customers', label: t('navCustomers'), icon: Users },
-    { to: '/reports', label: t('navReports'), icon: BarChart3 },
     { to: '/settings', label: t('navSettings'), icon: Settings },
   ];
 

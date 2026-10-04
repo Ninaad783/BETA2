@@ -117,27 +117,27 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Today's Profit */}
+        {/* Average Bill Value */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-md transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              {t('todaysProfit')}
+              Avg Ticket Value
             </span>
-            <span className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-              <TrendingUp className="w-4 h-4" />
+            <span className="w-7 h-7 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600">
+              <Receipt className="w-4 h-4" />
             </span>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-emerald-600 tracking-tight">
-              ₹{stats.todayProfit.toLocaleString('en-IN')}
+            <span className="text-2xl font-bold text-slate-900 tracking-tight">
+              ₹{Math.round(stats.todaySales / Math.max(1, stats.todayBillsCount)).toLocaleString('en-IN')}
             </span>
-            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-emerald-100">
-              <TrendingUp className="w-3 h-3" /> +{stats.todayProfitChangePercent}%
+            <span className="text-xs font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-sky-100">
+              Per Invoice
             </span>
           </div>
           <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
-            <span>Estimated Margin: ~20.8%</span>
-            <span className="text-emerald-600 font-semibold">Net</span>
+            <span>Average Counter Basket</span>
+            <span className="text-sky-600 font-semibold">Active</span>
           </div>
         </div>
 
@@ -309,9 +309,9 @@ export const DashboardPage: React.FC = () => {
                 <h3 className="text-sm font-bold text-slate-900">{t('topSellingMedicines')}</h3>
                 <p className="text-[11px] text-slate-400 mt-0.5">Highest volume this week</p>
               </div>
-              <button onClick={() => navigate('/reports')} className="text-xs text-sky-600 hover:text-sky-700 font-semibold cursor-pointer">
-                Full Report →
-              </button>
+              <span className="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-medium">
+                Top 5
+              </span>
             </div>
             <div className="space-y-1.5 text-xs">
               {TOP_SELLING_MEDICINES.map((item, idx) => (

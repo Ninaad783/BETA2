@@ -11,7 +11,6 @@ import { MedicineDetailsPage } from '../../modules/inventory/pages/MedicineDetai
 import { PurchasePage } from '../../modules/purchases/pages/PurchasePage';
 import { CustomersPage } from '../../modules/customers/pages/CustomersPage';
 import { CustomerDetailsPage } from '../../modules/customers/pages/CustomerDetailsPage';
-import { ReportsPage } from '../../modules/reports/pages/ReportsPage';
 import { SettingsPage } from '../../modules/settings/pages/SettingsPage';
 
 export const AppRouter: React.FC = () => {
@@ -30,7 +29,6 @@ export const AppRouter: React.FC = () => {
             <Route path="/suppliers" element={<SuppliersPage />} />
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/customers/:id" element={<CustomerDetailsPage />} />
-            <Route path="/reports" element={<ReportsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Route>

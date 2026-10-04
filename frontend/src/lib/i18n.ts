@@ -27,7 +27,7 @@ export const translations = {
     
     // Dashboard
     dashTitle: 'Daily Pharmacy Dashboard',
-    dashSub: 'Live overview of sales, profit, critical stock alerts, and inward purchases.',
+    dashSub: 'Live overview of counter sales, billing volume, critical stock alerts, and inward purchases.',
     newBillBtn: 'New Bill (F2)',
     purchaseEntryBtn: 'Purchase Entry',
     todaysSales: "Today's Sales",
@@ -160,7 +160,7 @@ export const translations = {
     
     // Dashboard
     dashTitle: 'दैनिक मेडिकल डॅशबोर्ड',
-    dashSub: 'आजची विक्री, नफा, स्टॉक व खरेदी व्यवहारांचा थेट आढावा.',
+    dashSub: 'काऊंटर विक्री, बिले, महत्त्वाचा साठा व खरेदी व्यवहारांचा थेट आढावा.',
     newBillBtn: 'नवीन बिल (F2)',
     purchaseEntryBtn: 'खरेदी नोंद',
     todaysSales: 'आजची एकूण विक्री',
