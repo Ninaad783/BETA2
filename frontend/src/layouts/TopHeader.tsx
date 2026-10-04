@@ -46,19 +46,22 @@ export const TopHeader: React.FC = () => {
         {/* Toggle Side Panel Button */}
         <button
           onClick={toggleSidebar}
-          className={`p-2 rounded-xl border transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
+          className={`px-3 py-2 rounded-xl transition cursor-pointer flex items-center gap-2 text-xs font-bold shadow-xs ${
             !sidebarOpen
-              ? 'bg-sky-50 border-sky-300 text-sky-700 shadow-xs'
-              : 'text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-800'
+              ? 'bg-sky-600 hover:bg-sky-700 text-white shadow-sky-200'
+              : 'text-slate-600 border border-slate-200 hover:bg-slate-100 hover:text-slate-900 bg-slate-50'
           }`}
           title={sidebarOpen ? "Hide side panel" : "Show side panel"}
         >
           {sidebarOpen ? (
-            <PanelLeftClose className="w-4 h-4" />
+            <>
+              <PanelLeftClose className="w-4 h-4 text-slate-500" />
+              <span className="hidden sm:inline">Hide Menu</span>
+            </>
           ) : (
             <>
-              <PanelLeftOpen className="w-4 h-4 text-sky-600" />
-              <span className="hidden sm:inline text-sky-700">Panel</span>
+              <PanelLeftOpen className="w-4 h-4 text-white" />
+              <span>Show Menu</span>
             </>
           )}
         </button>
