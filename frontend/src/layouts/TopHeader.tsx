@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, AlertTriangle, Clock, Users, Database, Check, X, Pill, User } from 'lucide-react';
+import { Search, Bell, AlertTriangle, Clock, Users, Database, Check, X, Pill, User, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useUIStore } from '../stores/uiStore';
 import { usePharmacyStore } from '../stores/pharmacyStore';
 
 export const TopHeader: React.FC = () => {
   const navigate = useNavigate();
-  const { language, setLanguage, activeNotificationCount } = useUIStore();
+  const { language, setLanguage, activeNotificationCount, sidebarOpen, toggleSidebar } = useUIStore();
   const { searchQuery, setSearchQuery, stats, medicines, customers } = usePharmacyStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
@@ -41,8 +41,30 @@ export const TopHeader: React.FC = () => {
 
   return (
     <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-xs sticky top-0 z-40">
-      {/* Global Quick Search with Live Dropdown */}
-      <div className="relative w-80 sm:w-96" ref={searchRef}>
+      {/* Left Area: Toggle Side Panel & Global Quick Search */}
+      <div className="flex items-center gap-3">
+        {/* Toggle Side Panel Button */}
+        <button
+          onClick={toggleSidebar}
+          className={`p-2 rounded-xl border transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
+            !sidebarOpen
+              ? 'bg-sky-50 border-sky-300 text-sky-700 shadow-xs'
+              : 'text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-800'
+          }`}
+          title={sidebarOpen ? "Hide side panel" : "Show side panel"}
+        >
+          {sidebarOpen ? (
+            <PanelLeftClose className="w-4 h-4" />
+          ) : (
+            <>
+              <PanelLeftOpen className="w-4 h-4 text-sky-600" />
+              <span className="hidden sm:inline text-sky-700">Panel</span>
+            </>
+          )}
+        </button>
+
+        {/* Global Quick Search with Live Dropdown */}
+        <div className="relative w-72 sm:w-88" ref={searchRef}>
         <div className="relative w-full">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -151,6 +173,7 @@ export const TopHeader: React.FC = () => {
           </div>
         )}
       </div>
+    </div>
 
       {/* Notification & Language Controls */}
       <div className="flex items-center space-x-3">
