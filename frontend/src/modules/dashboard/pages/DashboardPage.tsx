@@ -7,47 +7,80 @@ import {
   Package, 
   ShoppingBag, 
   Plus, 
-  ArrowUpRight 
+  ArrowUpRight,
+  ChevronRight,
+  Users
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  ResponsiveContainer, 
-  CartesianGrid 
-} from 'recharts';
 import { useUIStore } from '../../../stores/uiStore';
 import { usePharmacyStore } from '../../../stores/pharmacyStore';
-import { SALES_TREND_DATA, TOP_SELLING_MEDICINES } from '../../../lib/mockData';
 
-// Custom sleek tooltip component for Dashboard chart (cursor={false} removes ugly grey block)
-interface DashboardTooltipProps {
-  active?: boolean;
-  payload?: Array<{ value: number; name: string }>;
-  label?: string;
+interface RecentInvoice {
+  id: string;
+  invoiceNumber: string;
+  time: string;
+  customerName: string;
+  customerMobile?: string;
+  itemsSummary: string;
+  itemCount: number;
+  paymentMode: 'CASH' | 'UPI' | 'CARD';
+  totalAmount: number;
 }
 
-const CustomDashboardTooltip: React.FC<DashboardTooltipProps> = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-slate-900/95 backdrop-blur-md text-white px-3.5 py-2.5 rounded-xl shadow-xl border border-slate-800 text-xs pointer-events-none z-50">
-        <div className="flex items-center gap-1.5 mb-1 text-slate-400 text-[11px] font-medium">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          <span>{label}</span>
-        </div>
-        <p className="font-bold text-white text-sm tracking-tight font-sans">
-          ₹{Number(payload[0].value).toLocaleString('en-IN')}
-        </p>
-        <span className="text-[10px] text-emerald-400 font-medium block mt-0.5">
-          Gross Sales Revenue
-        </span>
-      </div>
-    );
-  }
-  return null;
-};
+const RECENT_INVOICES: RecentInvoice[] = [
+  {
+    id: 'inv-1',
+    invoiceNumber: 'INV-2026-0072',
+    time: '11:42 AM',
+    customerName: 'Walk-in Customer',
+    itemsSummary: 'Paracetamol 650mg, Pantoprazole 40',
+    itemCount: 2,
+    paymentMode: 'UPI',
+    totalAmount: 256.00,
+  },
+  {
+    id: 'inv-2',
+    invoiceNumber: 'INV-2026-0071',
+    time: '11:15 AM',
+    customerName: 'Suresh Shinde',
+    customerMobile: '9822112233',
+    itemsSummary: 'Azithromycin 500, ORS Sachet',
+    itemCount: 2,
+    paymentMode: 'CASH',
+    totalAmount: 345.00,
+  },
+  {
+    id: 'inv-3',
+    invoiceNumber: 'INV-2026-0070',
+    time: '10:50 AM',
+    customerName: 'Ramesh Deshmukh',
+    customerMobile: '9822334455',
+    itemsSummary: 'Dolo 650 (2 strips), Vitamin D3 60k',
+    itemCount: 3,
+    paymentMode: 'CASH',
+    totalAmount: 680.00,
+  },
+  {
+    id: 'inv-4',
+    invoiceNumber: 'INV-2026-0069',
+    time: '10:20 AM',
+    customerName: 'Sunita Jadhav',
+    customerMobile: '9890445566',
+    itemsSummary: 'Cetirizine 10, Cough Syrup',
+    itemCount: 2,
+    paymentMode: 'UPI',
+    totalAmount: 190.00,
+  },
+  {
+    id: 'inv-5',
+    invoiceNumber: 'INV-2026-0068',
+    time: '09:45 AM',
+    customerName: 'Walk-in Customer',
+    itemsSummary: 'Bandage, Antiseptic Cream',
+    itemCount: 2,
+    paymentMode: 'CARD',
+    totalAmount: 140.00,
+  },
+];
 
 export const DashboardPage: React.FC = () => {
   const { t } = useUIStore();
@@ -158,12 +191,12 @@ export const DashboardPage: React.FC = () => {
             </span>
           </div>
           <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
-            <span>Avg ₹{Math.round(stats.todaySales / Math.max(1, stats.todayBillsCount))} / bill</span>
+            <span>Live Counter Invoices Cleared</span>
             <span className="text-sky-600 font-semibold">Counter</span>
           </div>
         </div>
 
-        {/* Today's Inward Purchases (v_today_counter_analytics) */}
+        {/* Today's Inward Purchases */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-md transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
@@ -271,78 +304,173 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Charts & Movers Grid */}
+      {/* Recent Counter Activity & Fast Shortcuts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sales Trend Bar Chart */}
-        <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs">
-          <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">{t('salesTrend7Days')}</h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">Daily gross counter collection</p>
+        {/* Recent Counter Invoices Table */}
+        <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <Receipt className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Recent Counter Invoices</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Live retail bills cleared today</p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate('/billing')}
+                className="text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200/70 transition flex items-center gap-1 cursor-pointer"
+              >
+                <span>New Bill (F2)</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <span className="text-xs text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md font-medium">
-              Current Week
-            </span>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+                    <th className="pb-2.5">Invoice #</th>
+                    <th className="pb-2.5">Customer</th>
+                    <th className="pb-2.5">Items Summary</th>
+                    <th className="pb-2.5">Payment</th>
+                    <th className="pb-2.5 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {RECENT_INVOICES.map((inv) => (
+                    <tr key={inv.id} className="hover:bg-slate-50/70 transition">
+                      <td className="py-3 font-bold text-slate-900 font-mono">
+                        {inv.invoiceNumber}
+                        <span className="block text-[10px] text-slate-400 font-normal">{inv.time}</span>
+                      </td>
+                      <td className="py-3 text-slate-700">
+                        <span className="font-semibold block">{inv.customerName}</span>
+                        {inv.customerMobile && (
+                          <span className="text-[10px] text-slate-400 font-mono">{inv.customerMobile}</span>
+                        )}
+                      </td>
+                      <td className="py-3 text-slate-600">
+                        <span className="truncate max-w-[200px] block font-medium">{inv.itemsSummary}</span>
+                        <span className="text-[10px] text-slate-400">{inv.itemCount} items cleared</span>
+                      </td>
+                      <td className="py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                          inv.paymentMode === 'UPI'
+                            ? 'bg-purple-50 text-purple-700 border border-purple-200/60'
+                            : inv.paymentMode === 'CARD'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200/60'
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                        }`}>
+                          {inv.paymentMode}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right font-bold text-slate-900 font-mono text-sm">
+                        ₹{inv.totalAmount.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          <div className="h-64 w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={SALES_TREND_DATA} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v/1000}k`} />
-                <Tooltip
-                  cursor={false}
-                  content={<CustomDashboardTooltip />}
-                />
-                <Bar dataKey="sales" fill="#10b981" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Showing latest {RECENT_INVOICES.length} invoices cleared today</span>
+            <button
+              onClick={() => navigate('/billing')}
+              className="text-sky-600 hover:text-sky-700 font-semibold flex items-center gap-1 cursor-pointer"
+            >
+              <span>Open POS Counter</span>
+              <span>→</span>
+            </button>
           </div>
         </div>
 
-        {/* Top Selling Medicines */}
+        {/* Fast Counter Shortcuts Panel */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex justify-between items-center mb-3 pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">{t('topSellingMedicines')}</h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">Highest volume this week</p>
-              </div>
-              <span className="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-medium">
-                Top 5
-              </span>
+            <div className="mb-4 pb-3 border-b border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900">Fast Counter Shortcuts</h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">Quick access for pharmacy staff</p>
             </div>
-            <div className="space-y-1.5 text-xs">
-              {TOP_SELLING_MEDICINES.map((item, idx) => (
-                <div key={idx} className="p-2.5 rounded-lg flex justify-between items-center transition hover:bg-slate-50 border border-transparent hover:border-slate-200/60">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-5 h-5 rounded-md bg-slate-100 border border-slate-200 text-slate-600 font-bold text-[10px] flex items-center justify-center shrink-0">
-                      {idx + 1}
-                    </span>
-                    <div>
-                      <span className="font-semibold text-slate-800 block">
-                        {item.name}
-                      </span>
-                      <span className="text-[11px] text-slate-400">
-                        {item.type} • {item.soldQty} strips
-                      </span>
-                    </div>
+
+            <div className="space-y-2.5">
+              <button
+                onClick={() => navigate('/billing')}
+                className="w-full p-3 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-emerald-50/60 hover:border-emerald-200 text-left transition flex items-center justify-between group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <Receipt className="w-4 h-4" />
                   </div>
-                  <span className="font-bold text-slate-800 bg-slate-50 px-2 py-1 rounded-md border border-slate-200/50">
-                    ₹{item.revenue.toLocaleString('en-IN')}
-                  </span>
+                  <div>
+                    <p className="font-bold text-slate-900 text-xs group-hover:text-emerald-700">New Bill (POS Counter)</p>
+                    <p className="text-[11px] text-slate-500">Press F2 for quick customer invoice</p>
+                  </div>
                 </div>
-              ))}
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition" />
+              </button>
+
+              <button
+                onClick={() => navigate('/purchases')}
+                className="w-full p-3 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-sky-50/60 hover:border-sky-200 text-left transition flex items-center justify-between group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
+                    <ShoppingBag className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-900 text-xs group-hover:text-sky-700">Inward Purchase Entry</p>
+                    <p className="text-[11px] text-slate-500">Stock in from Pune distributors</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-sky-600 transition" />
+              </button>
+
+              <button
+                onClick={() => navigate('/stock')}
+                className="w-full p-3 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-amber-50/60 hover:border-amber-200 text-left transition flex items-center justify-between group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                    <Package className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-900 text-xs group-hover:text-amber-700">Stock & Rack Vault</p>
+                    <p className="text-[11px] text-slate-500">Check FEFO batches & low alerts</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-amber-600 transition" />
+              </button>
+
+              <button
+                onClick={() => navigate('/customers')}
+                className="w-full p-3 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-purple-50/60 hover:border-purple-200 text-left transition flex items-center justify-between group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-900 text-xs group-hover:text-purple-700">Customer Directory</p>
+                    <p className="text-[11px] text-slate-500">Lookup mobile & purchase records</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 transition" />
+              </button>
             </div>
           </div>
-          <button
-            onClick={() => navigate('/stock')}
-            className="w-full mt-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold text-center border border-slate-200 transition flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <span>Manage Pharmacy Inventory</span>
-            <span>→</span>
-          </button>
+
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Terminal: Counter #1 (Admin)</span>
+            <span className="text-emerald-600 font-semibold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Ready
+            </span>
+          </div>
         </div>
       </div>
     </div>
