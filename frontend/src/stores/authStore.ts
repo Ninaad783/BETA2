@@ -110,7 +110,7 @@ export const useAuthStore = create<AuthState>((set) => {
           return { success: true };
         }
 
-        const fallbackErr = 'Backend auth server unreachable. Please verify backend is running on port 5000.';
+        const fallbackErr = `Unable to connect to backend server (${API_BASE_URL}). Please verify your connection.`;
         set({ isLoading: false, error: fallbackErr });
         return { success: false, message: fallbackErr };
       }
