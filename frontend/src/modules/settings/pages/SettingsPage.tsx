@@ -3,6 +3,7 @@ import { Database, ShieldCheck, Download, Upload, CheckCircle2, Store, Printer, 
 import { useUIStore } from '../../../stores/uiStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { Modal } from '../../../components/ui/Modal';
+import { API_BASE_URL } from '../../../lib/apiClient';
 
 export const SettingsPage: React.FC = () => {
   const { language, setLanguage } = useUIStore();
@@ -30,7 +31,7 @@ export const SettingsPage: React.FC = () => {
     if (!token) return;
     setIsLoadingStaff(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/users', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -55,7 +56,7 @@ export const SettingsPage: React.FC = () => {
     setIsSubmittingUser(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/register', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

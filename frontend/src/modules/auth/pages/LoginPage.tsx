@@ -4,6 +4,7 @@ import { Plus, User, Lock, ArrowRight, AlertCircle, CheckCircle2, Key, Phone } f
 import { useUIStore } from '../../../stores/uiStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { Modal } from '../../../components/ui/Modal';
+import { API_BASE_URL } from '../../../lib/apiClient';
 
 export const LoginPage: React.FC = () => {
   const { language, setLanguage, t } = useUIStore();
@@ -56,7 +57,7 @@ export const LoginPage: React.FC = () => {
 
     setIsResetting(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

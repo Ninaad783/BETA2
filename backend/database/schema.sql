@@ -10,12 +10,26 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- =============================================================================
 -- 1. ENUM TYPES
 -- =============================================================================
-CREATE TYPE user_role AS ENUM ('ADMIN', 'PHARMACIST', 'STAFF');
-CREATE TYPE sale_payment_mode AS ENUM ('CASH', 'UPI', 'CARD');
-CREATE TYPE sale_status AS ENUM ('COMPLETED', 'CANCELLED');
-CREATE TYPE purchase_payment_mode AS ENUM ('CASH', 'UPI', 'CARD', 'BANK_TRANSFER');
-CREATE TYPE purchase_status AS ENUM ('RECEIVED', 'CANCELLED');
-CREATE TYPE stock_status_enum AS ENUM ('IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK');
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+        CREATE TYPE user_role AS ENUM ('ADMIN', 'PHARMACIST', 'STAFF');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'sale_payment_mode') THEN
+        CREATE TYPE sale_payment_mode AS ENUM ('CASH', 'UPI', 'CARD');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'sale_status') THEN
+        CREATE TYPE sale_status AS ENUM ('COMPLETED', 'CANCELLED');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'purchase_payment_mode') THEN
+        CREATE TYPE purchase_payment_mode AS ENUM ('CASH', 'UPI', 'CARD', 'BANK_TRANSFER');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'purchase_status') THEN
+        CREATE TYPE purchase_status AS ENUM ('RECEIVED', 'CANCELLED');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'stock_status_enum') THEN
+        CREATE TYPE stock_status_enum AS ENUM ('IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK');
+    END IF;
+END $$;
 
 -- =============================================================================
 -- 2. STORE PROFILE & CONFIGURATION

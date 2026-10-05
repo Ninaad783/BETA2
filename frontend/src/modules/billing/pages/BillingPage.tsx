@@ -22,6 +22,7 @@ import {
 import { useUIStore } from '../../../stores/uiStore';
 import { usePharmacyStore } from '../../../stores/pharmacyStore';
 import { Modal } from '../../../components/ui/Modal';
+import { API_BASE_URL } from '../../../lib/apiClient';
 
 export const BillingPage: React.FC = () => {
   const { t } = useUIStore();
@@ -97,7 +98,7 @@ export const BillingPage: React.FC = () => {
     setIsLoadingSuggestions(true);
     const debounceTimer = setTimeout(async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/medicines/search?q=${encodeURIComponent(searchTerm.trim())}&limit=12`);
+        const res = await fetch(`${API_BASE_URL}/api/medicines/search?q=${encodeURIComponent(searchTerm.trim())}&limit=12`);
         if (res.ok) {
           const data = await res.json();
           setMasterResults(data.masterMatches || []);

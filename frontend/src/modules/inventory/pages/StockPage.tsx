@@ -5,6 +5,7 @@ import { useUIStore } from '../../../stores/uiStore';
 import { usePharmacyStore } from '../../../stores/pharmacyStore';
 import type { Medicine } from '../../../types/pharmacy.types';
 import { Modal } from '../../../components/ui/Modal';
+import { API_BASE_URL } from '../../../lib/apiClient';
 
 export const StockPage: React.FC = () => {
   const { t } = useUIStore();
@@ -59,7 +60,7 @@ export const StockPage: React.FC = () => {
     }
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/medicines/master?q=${encodeURIComponent(name.trim())}&limit=6`);
+        const res = await fetch(`${API_BASE_URL}/api/medicines/master?q=${encodeURIComponent(name.trim())}&limit=6`);
         if (res.ok) {
           const data = await res.json();
           setMasterSuggestions(data.medicines || []);
