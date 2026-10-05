@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   Plus, 
@@ -16,7 +16,8 @@ import {
   ExternalLink,
   Sparkles,
   ShoppingCart,
-  Stethoscope
+  Stethoscope,
+  Database
 } from 'lucide-react';
 import { useUIStore } from '../../../stores/uiStore';
 import { usePharmacyStore } from '../../../stores/pharmacyStore';
@@ -34,6 +35,7 @@ export const BillingPage: React.FC = () => {
     patientName,
     invoiceCounter,
     addItemToCart, 
+    addMasterItemToCart,
     updateCartItemQty, 
     removeCartItem, 
     clearCart, 
@@ -80,8 +82,44 @@ export const BillingPage: React.FC = () => {
     m.batches.some((b) => b.barcode && b.barcode.includes(searchTerm))
   );
 
+  // Master Medicine Catalog Suggestions (1,000+ Database in PostgreSQL)
+  const [masterResults, setMasterResults] = useState<any[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+
+  // Debounced query hitting live backend PostgreSQL database
+  useEffect(() => {
+    if (!searchTerm || searchTerm.trim().length < 2) {
+      setMasterResults([]);
+      setIsLoadingSuggestions(false);
+      return;
+    }
+
+    setIsLoadingSuggestions(true);
+    const debounceTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/medicines/search?q=${encodeURIComponent(searchTerm.trim())}&limit=12`);
+        if (res.ok) {
+          const data = await res.json();
+          setMasterResults(data.masterMatches || []);
+        }
+      } catch (err) {
+        console.error('Failed to query master medicines from backend:', err);
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    }, 180);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm]);
+
   const handleSelectMedicine = (med: typeof medicines[0]) => {
     addItemToCart(med);
+    setSearchTerm('');
+    setShowSearchResults(false);
+  };
+
+  const handleSelectMasterMedicine = (masterMed: any) => {
+    addMasterItemToCart(masterMed);
     setSearchTerm('');
     setShowSearchResults(false);
   };
@@ -209,9 +247,14 @@ export const BillingPage: React.FC = () => {
                     setShowSearchResults(true);
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && searchResults.length > 0) {
-                      e.preventDefault();
-                      handleSelectMedicine(searchResults[0]);
+                    if (e.key === 'Enter') {
+                      if (searchResults.length > 0) {
+                        e.preventDefault();
+                        handleSelectMedicine(searchResults[0]);
+                      } else if (masterResults.length > 0) {
+                        e.preventDefault();
+                        handleSelectMasterMedicine(masterResults[0]);
+                      }
                     }
                   }}
                   onFocus={() => setShowSearchResults(true)}
@@ -221,7 +264,11 @@ export const BillingPage: React.FC = () => {
               </div>
               <button
                 onClick={() => {
-                  if (medicines.length > 0) addItemToCart(medicines[0]);
+                  if (searchResults.length > 0) {
+                    addItemToCart(searchResults[0]);
+                  } else if (masterResults.length > 0) {
+                    addMasterItemToCart(masterResults[0]);
+                  }
                 }}
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow-xs cursor-pointer"
               >
@@ -230,30 +277,96 @@ export const BillingPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Autocomplete Dropdown */}
+            {/* Autocomplete Dropdown: Local Inventory + 1,000+ Master Catalog */}
             {showSearchResults && searchTerm.trim() !== '' && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-200 max-h-60 overflow-y-auto z-50 divide-y divide-slate-100">
-                {searchResults.length > 0 ? (
-                  searchResults.map((med) => (
-                    <div
-                      key={med.id}
-                      onClick={() => handleSelectMedicine(med)}
-                      className="p-3 hover:bg-sky-50/80 cursor-pointer flex justify-between items-center transition"
-                    >
-                      <div>
-                        <span className="font-bold text-xs text-slate-900">{med.name}</span>
-                        <span className="text-[11px] text-slate-500 block">
-                          {med.genericName} • Stock: {med.totalStock} {med.unit}s
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-bold text-xs text-emerald-600">₹{med.sellingPrice.toFixed(2)}</span>
-                        <span className="text-[10px] text-slate-400 block line-through">MRP ₹{med.mrp.toFixed(2)}</span>
-                      </div>
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-slate-200 max-h-80 overflow-y-auto z-50 divide-y divide-slate-100">
+                {/* Local Store Inventory Results */}
+                {searchResults.length > 0 && (
+                  <div>
+                    <div className="px-3 py-1.5 bg-slate-100/90 text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
+                      <span>In Store Inventory</span>
+                      <span className="text-emerald-600 font-semibold">{searchResults.length} in stock</span>
                     </div>
-                  ))
-                ) : (
-                  <div className="p-3 text-xs text-slate-400 text-center">No medicines found matching "{searchTerm}"</div>
+                    {searchResults.map((med) => (
+                      <div
+                        key={med.id}
+                        onClick={() => handleSelectMedicine(med)}
+                        className="p-3 hover:bg-emerald-50/60 cursor-pointer flex justify-between items-center transition"
+                      >
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-xs text-slate-900">{med.name}</span>
+                            <span className="text-[9px] bg-emerald-100 text-emerald-800 font-semibold px-1.5 py-0.5 rounded">Ready to Bill</span>
+                          </div>
+                          <span className="text-[11px] text-slate-500 block mt-0.5">
+                            {med.genericName} • Stock: {med.totalStock} {med.unit}s
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-bold text-xs text-emerald-600">₹{med.sellingPrice.toFixed(2)}</span>
+                          <span className="text-[10px] text-slate-400 block line-through">MRP ₹{med.mrp.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Master Medicines Catalog Results (1,000+ Database) */}
+                {masterResults.length > 0 && (
+                  <div>
+                    <div className="px-3 py-1.5 bg-sky-50 text-[10px] font-bold uppercase tracking-wider text-sky-700 flex items-center justify-between border-t border-sky-100">
+                      <div className="flex items-center gap-1">
+                        <Database className="w-3 h-3 text-sky-600" />
+                        <span>Master Drug Catalog (India)</span>
+                      </div>
+                      <span className="text-sky-600 font-semibold">{masterResults.length} matches</span>
+                    </div>
+                    {masterResults.map((med) => (
+                      <div
+                        key={med.id}
+                        onClick={() => handleSelectMasterMedicine(med)}
+                        className="p-3 hover:bg-sky-50/70 cursor-pointer flex justify-between items-center transition"
+                      >
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-xs text-slate-900">{med.name}</span>
+                            <span className="text-[9px] bg-sky-100 text-sky-800 font-semibold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                              {med.form}
+                            </span>
+                            {med.requires_prescription && (
+                              <span className="text-[9px] bg-amber-100 text-amber-800 font-semibold px-1.5 py-0.5 rounded">Rx</span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-500">
+                            <span className="font-medium text-slate-700">{med.generic_name}</span>
+                            <span className="mx-1">•</span>
+                            <span className="text-slate-400">{med.manufacturer}</span>
+                          </div>
+                          <div className="text-[10px] text-slate-400">
+                            Pack: {med.pack_size} | HSN: {med.hsn_code} | GST: {med.gst_rate}%
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0 ml-3">
+                          <span className="font-bold text-xs text-sky-600">MRP ₹{Number(med.typical_mrp).toFixed(2)}</span>
+                          <span className="text-[10px] text-emerald-600 block font-semibold">+ 1-Click Bill</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Empty State / Loading State */}
+                {isLoadingSuggestions && (
+                  <div className="p-3 text-xs text-slate-400 text-center flex items-center justify-center gap-2">
+                    <span className="animate-spin w-3 h-3 border-2 border-sky-500 border-t-transparent rounded-full" />
+                    <span>Searching 1,000+ medicine catalog...</span>
+                  </div>
+                )}
+
+                {!isLoadingSuggestions && searchResults.length === 0 && masterResults.length === 0 && (
+                  <div className="p-4 text-xs text-slate-400 text-center">
+                    No medicines found matching "{searchTerm}" in local stock or master catalog.
+                  </div>
                 )}
               </div>
             )}

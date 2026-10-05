@@ -51,6 +51,7 @@ interface PharmacyState {
 
   // Cart actions
   addItemToCart: (medicine: Medicine, preferredBatch?: MedicineBatch) => void;
+  addMasterItemToCart: (masterMed: { id: string; name: string; typical_mrp?: number | string; requires_prescription?: boolean }) => void;
   updateCartItemQty: (cartItemId: string, newQty: number) => void;
   removeCartItem: (cartItemId: string) => void;
   clearCart: () => void;
@@ -143,6 +144,44 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
         discountPercent: 0,
         total: batch.sellingPrice,
         requiresPrescription: medicine.requiresPrescription || false
+      };
+      set({ cart: [...cart, newItem] });
+    }
+  },
+
+  addMasterItemToCart: (masterMed) => {
+    const { cart } = get();
+    const mrp = typeof masterMed.typical_mrp === 'string' 
+      ? parseFloat(masterMed.typical_mrp) || 50 
+      : Number(masterMed.typical_mrp || 50);
+    const sellingPrice = Number((mrp * 0.95).toFixed(2));
+    
+    // Check if already in cart by name or id
+    const existingIndex = cart.findIndex((item) => item.medicineName === masterMed.name);
+    if (existingIndex > -1) {
+      const updatedCart = [...cart];
+      const item = updatedCart[existingIndex];
+      const newQty = item.quantity + 1;
+      updatedCart[existingIndex] = {
+        ...item,
+        quantity: newQty,
+        total: Number((newQty * item.sellingPrice * (1 - item.discountPercent / 100)).toFixed(2))
+      };
+      set({ cart: updatedCart });
+    } else {
+      const newItem: CartItem = {
+        id: `cart-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        medicineId: masterMed.id,
+        medicineName: masterMed.name,
+        batchId: `batch-${masterMed.id.substring(0, 8)}`,
+        batchNumber: 'B-STD',
+        expiryDate: '12/28',
+        mrp: mrp,
+        sellingPrice: sellingPrice,
+        quantity: 1,
+        discountPercent: 0,
+        total: sellingPrice,
+        requiresPrescription: masterMed.requires_prescription || false
       };
       set({ cart: [...cart, newItem] });
     }

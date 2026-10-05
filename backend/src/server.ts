@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { pool } from "./db";
 import { authRouter } from "./routes/auth.routes";
+import { medicineRouter } from "./routes/medicine.routes";
 
 dotenv.config();
 
@@ -44,6 +45,9 @@ app.get("/api/db/health", async (_req, res) => {
 
 // Authentication Routes
 app.use("/api/auth", authRouter);
+
+// Medicine Catalog & Search Routes
+app.use("/api/medicines", medicineRouter);
 
 // Start server
 app.listen(PORT, () => {
