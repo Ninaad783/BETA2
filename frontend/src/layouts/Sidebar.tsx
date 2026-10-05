@@ -22,15 +22,18 @@ export const Sidebar: React.FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
-  const navItems = [
-    { to: '/dashboard', label: t('navDashboard'), icon: LayoutDashboard },
-    { to: '/billing', label: t('navBilling'), icon: ReceiptText },
-    { to: '/stock', label: t('navStock'), icon: Pill, badge: stats.lowStockCount, badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-500/30' },
-    { to: '/purchases', label: t('navPurchases'), icon: PackagePlus },
-    { to: '/suppliers', label: t('navSuppliers'), icon: Truck },
-    { to: '/customers', label: t('navCustomers'), icon: Users },
-    { to: '/settings', label: t('navSettings'), icon: Settings },
+  const allNavItems = [
+    { to: '/dashboard', label: t('navDashboard'), icon: LayoutDashboard, roles: ['ADMIN', 'PHARMACIST', 'STAFF'] },
+    { to: '/billing', label: t('navBilling'), icon: ReceiptText, roles: ['ADMIN', 'PHARMACIST', 'STAFF'] },
+    { to: '/stock', label: t('navStock'), icon: Pill, badge: stats.lowStockCount, badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-500/30', roles: ['ADMIN', 'PHARMACIST'] },
+    { to: '/purchases', label: t('navPurchases'), icon: PackagePlus, roles: ['ADMIN', 'PHARMACIST'] },
+    { to: '/suppliers', label: t('navSuppliers'), icon: Truck, roles: ['ADMIN', 'PHARMACIST'] },
+    { to: '/customers', label: t('navCustomers'), icon: Users, roles: ['ADMIN', 'PHARMACIST', 'STAFF'] },
+    { to: '/settings', label: t('navSettings'), icon: Settings, roles: ['ADMIN'] },
   ];
+
+  // Filter navigation items by staff user role
+  const navItems = allNavItems.filter((item) => !user || item.roles.includes(user.role));
 
   return (
     <aside 
@@ -92,11 +95,11 @@ export const Sidebar: React.FC = () => {
       <div className="p-3 bg-slate-950/70 border-t border-slate-800 text-xs flex items-center justify-between">
         <div className="flex items-center space-x-2.5">
           <div className="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center ring-2 ring-emerald-500/30">
-            {user?.fullName?.charAt(0) || 'R'}
+            {user?.fullName?.charAt(0) || 'N'}
           </div>
           <div>
             <p className="text-white font-semibold truncate max-w-[120px]">
-              {user ? `${user.fullName} (${user.role})` : 'Rahul Patil (Admin)'}
+              {user ? `${user.fullName} (${user.role})` : 'Ninaad Kumbhar (ADMIN)'}
             </p>
             <p className="text-[11px] text-emerald-400 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>

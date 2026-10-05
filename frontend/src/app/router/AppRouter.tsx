@@ -20,16 +20,25 @@ export const AppRouter: React.FC = () => {
         {/* Protected App Shell Layout (Guarded by ProtectedRoute) */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
+            {/* Accessible to all authenticated roles (ADMIN, PHARMACIST, STAFF) */}
             <Route path="/" element={<DashboardPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/billing" element={<BillingPage />} />
-            <Route path="/stock" element={<StockPage />} />
-            <Route path="/stock/:id" element={<MedicineDetailsPage />} />
-            <Route path="/purchases" element={<PurchasePage />} />
-            <Route path="/suppliers" element={<SuppliersPage />} />
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/customers/:id" element={<CustomerDetailsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+
+            {/* Inventory, Purchases & Suppliers: Accessible to ADMIN and PHARMACIST */}
+            <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'PHARMACIST']} />}>
+              <Route path="/stock" element={<StockPage />} />
+              <Route path="/stock/:id" element={<MedicineDetailsPage />} />
+              <Route path="/purchases" element={<PurchasePage />} />
+              <Route path="/suppliers" element={<SuppliersPage />} />
+            </Route>
+
+            {/* System Configuration & Store Settings: ADMIN only */}
+            <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
           </Route>
         </Route>
 
