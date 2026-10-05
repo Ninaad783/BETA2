@@ -297,7 +297,13 @@ export const logout = async (_req: AuthenticatedRequest, res: Response): Promise
  * Body: { username, password, fullName, role, mobile, preferredLanguage, storeId }
  */
 export const register = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { username, password, fullName, role = 'STAFF', mobile, preferredLanguage = 'mr', storeId } = req.body;
+  const username = req.body.username;
+  const password = req.body.password;
+  const fullName = req.body.fullName || req.body.full_name;
+  const role = req.body.role || 'STAFF';
+  const mobile = req.body.mobile;
+  const preferredLanguage = req.body.preferredLanguage || req.body.preferred_language || 'mr';
+  const storeId = req.body.storeId || req.body.store_id;
 
   if (!username || !password || !fullName) {
     res.status(400).json({
@@ -429,12 +435,22 @@ export const getUsers = async (req: AuthenticatedRequest, res: Response): Promis
  * Body: { username, mobile, newPassword }
  */
 export const forgotPassword = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { username, mobile, newPassword } = req.body;
+  const username = req.body.username;
+  const mobile = req.body.mobile;
+  const newPassword = req.body.newPassword || req.body.new_password;
 
-  if (!username || !newPassword) {
+  if (!newPassword) {
     res.status(400).json({
       success: false,
-      message: 'Username and new password are required',
+      message: 'New password is required',
+    });
+    return;
+  }
+
+  if (!username && !mobile) {
+    res.status(400).json({
+      success: false,
+      message: 'Username or registered mobile number is required',
     });
     return;
   }
@@ -448,22 +464,33 @@ export const forgotPassword = async (req: AuthenticatedRequest, res: Response): 
   }
 
   try {
-    const userRes = await pool.query<UserRow>(
-      `SELECT * FROM users WHERE username = $1 AND is_active = true LIMIT 1;`,
-      [username.trim()]
-    );
+    let userRes;
+    if (username) {
+      userRes = await pool.query<UserRow>(
+        `SELECT * FROM users WHERE username = $1 AND is_active = true LIMIT 1;`,
+        [username.trim()]
+      );
+    } else {
+      const cleanMobile = String(mobile).replace(/\D/g, '').slice(-10);
+      userRes = await pool.query<UserRow>(
+        `SELECT * FROM users WHERE RIGHT(REGEXP_REPLACE(mobile, '\\D', '', 'g'), 10) = $1 AND is_active = true LIMIT 1;`,
+        [cleanMobile]
+      );
+    }
 
     const user = userRes.rows[0];
     if (!user) {
       res.status(404).json({
         success: false,
-        message: `No active account found for username '${username.trim()}'`,
+        message: username 
+          ? `No active account found for username '${username.trim()}'`
+          : `No active account found for mobile number '${mobile}'`,
       });
       return;
     }
 
-    // Verify mobile number if user has registered mobile
-    if (user.mobile && mobile) {
+    // Verify mobile number if both username and mobile were provided
+    if (username && mobile && user.mobile) {
       const cleanUserMobile = user.mobile.replace(/\D/g, '');
       const cleanInputMobile = String(mobile).replace(/\D/g, '');
       if (cleanUserMobile.slice(-10) !== cleanInputMobile.slice(-10)) {
@@ -473,7 +500,7 @@ export const forgotPassword = async (req: AuthenticatedRequest, res: Response): 
         });
         return;
       }
-    } else if (user.mobile && !mobile) {
+    } else if (username && user.mobile && !mobile) {
       res.status(400).json({
         success: false,
         message: 'Please provide the registered mobile number for identity verification',

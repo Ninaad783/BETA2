@@ -55,9 +55,9 @@ export const SuppliersPage: React.FC = () => {
       contactPerson,
       mobile,
       email,
-      gstin: gstin || '27AABCP1234A1Z5',
-      dlNumber: dlNumber || '20B/21B-PUN-0000',
-      address: address || 'Pune, Maharashtra'
+      gstin: gstin || '',
+      dlNumber: dlNumber || '',
+      address: address || ''
     });
 
     setShowAddModal(false);

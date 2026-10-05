@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Eye, Edit3, Download, Pill, Layers, Sparkles } from 'lucide-react';
+import { Plus, Search, Eye, Edit3, Download, Pill, Layers, Sparkles, Database } from 'lucide-react';
 import { useUIStore } from '../../../stores/uiStore';
 import { usePharmacyStore } from '../../../stores/pharmacyStore';
 import type { Medicine } from '../../../types/pharmacy.types';
@@ -49,6 +49,44 @@ export const StockPage: React.FC = () => {
   const [mrp, setMrp] = useState(40);
   const [sellingPrice, setSellingPrice] = useState(36);
   const [quantity, setQuantity] = useState(50);
+  const [masterSuggestions, setMasterSuggestions] = useState<any[]>([]);
+  const [showMasterSuggestions, setShowMasterSuggestions] = useState(false);
+
+  useEffect(() => {
+    if (!name || name.trim().length < 2 || !showAddModal) {
+      setMasterSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/medicines/master?q=${encodeURIComponent(name.trim())}&limit=6`);
+        if (res.ok) {
+          const data = await res.json();
+          setMasterSuggestions(data.medicines || []);
+        }
+      } catch (err) {
+        console.error('Failed to query master medicines in stock modal:', err);
+      }
+    }, 180);
+    return () => clearTimeout(timer);
+  }, [name, showAddModal]);
+
+  const handleSelectMasterForStock = (sug: any) => {
+    setName(sug.name);
+    setGenericName(sug.generic_name);
+    setCategory(sug.category || 'Allopathy');
+    setManufacturer(sug.manufacturer || '');
+    setHsnCode(sug.hsn_code || '300490');
+    setRequiresPrescription(sug.requires_prescription || false);
+    const typicalMrp = Number(sug.typical_mrp) || 50;
+    setMrp(typicalMrp);
+    setSellingPrice(Number((typicalMrp * 0.95).toFixed(2)));
+    setPurchasePrice(Number((typicalMrp * 0.70).toFixed(2)));
+    if (!batchNumber) {
+      setBatchNumber(`B-${Math.floor(1000 + Math.random() * 9000)}`);
+    }
+    setShowMasterSuggestions(false);
+  };
 
   // Tab Filtering
   const filteredMedicines = medicines.filter((m) => {
@@ -343,16 +381,54 @@ export const StockPage: React.FC = () => {
             </span>
 
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Brand Name *</label>
+              <div className="relative">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-semibold text-slate-700">Brand Name *</label>
+                  <span className="text-[10px] text-sky-600 font-medium flex items-center gap-1">
+                    <Database className="w-3 h-3" /> Auto-fills from 1k catalog
+                  </span>
+                </div>
                 <input
                   type="text"
                   required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Combiflam"
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    setShowMasterSuggestions(true);
+                  }}
+                  onFocus={() => setShowMasterSuggestions(true)}
+                  placeholder="e.g. Dolo, Augmentin, Pan..."
                   className="w-full border border-slate-200 rounded-xl p-2 bg-white font-medium focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none"
                 />
+
+                {/* Master Catalog Dropdown */}
+                {showMasterSuggestions && masterSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-52 overflow-y-auto divide-y divide-slate-100">
+                    {masterSuggestions.map((sug) => (
+                      <div
+                        key={sug.id}
+                        onClick={() => handleSelectMasterForStock(sug)}
+                        className="p-2.5 hover:bg-sky-50 cursor-pointer transition text-left flex justify-between items-center"
+                      >
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-xs text-slate-900">{sug.name}</span>
+                            <span className="text-[9px] bg-sky-100 text-sky-800 font-semibold px-1 py-0.5 rounded">
+                              {sug.form}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">
+                            {sug.generic_name} • {sug.manufacturer}
+                          </span>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <span className="text-xs font-bold text-emerald-600">MRP ₹{Number(sug.typical_mrp).toFixed(2)}</span>
+                          <span className="text-[9px] text-sky-600 font-semibold block">Click to autofill</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Generic / Salt Composition</label>

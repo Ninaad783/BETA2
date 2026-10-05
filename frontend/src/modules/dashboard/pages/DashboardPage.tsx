@@ -14,24 +14,11 @@ import {
 import { useUIStore } from '../../../stores/uiStore';
 import { usePharmacyStore } from '../../../stores/pharmacyStore';
 
-interface RecentInvoice {
-  id: string;
-  invoiceNumber: string;
-  time: string;
-  customerName: string;
-  customerMobile?: string;
-  itemsSummary: string;
-  itemCount: number;
-  paymentMode: 'CASH' | 'UPI' | 'CARD';
-  totalAmount: number;
-}
-
-const RECENT_INVOICES: RecentInvoice[] = [];
-
 export const DashboardPage: React.FC = () => {
   const { t } = useUIStore();
   const navigate = useNavigate();
-  const { stats } = usePharmacyStore();
+  const { stats, salesInvoices } = usePharmacyStore();
+  const recentInvoices = (salesInvoices || []).slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -286,18 +273,18 @@ export const DashboardPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {RECENT_INVOICES.length === 0 ? (
+                  {recentInvoices.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-slate-400">
                         No counter invoices created yet. Counter sales will appear here in real-time.
                       </td>
                     </tr>
                   ) : (
-                    RECENT_INVOICES.map((inv) => (
+                    recentInvoices.map((inv) => (
                       <tr key={inv.id} className="hover:bg-slate-50/70 transition">
                         <td className="py-3 font-bold text-slate-900 font-mono">
                           {inv.invoiceNumber}
-                          <span className="block text-[10px] text-slate-400 font-normal">{inv.time}</span>
+                          <span className="block text-[10px] text-slate-400 font-normal">{inv.date}</span>
                         </td>
                         <td className="py-3 text-slate-700">
                           <span className="font-semibold block">{inv.customerName}</span>
@@ -307,7 +294,7 @@ export const DashboardPage: React.FC = () => {
                         </td>
                         <td className="py-3 text-slate-600">
                           <span className="truncate max-w-[200px] block font-medium">{inv.itemsSummary}</span>
-                          <span className="text-[10px] text-slate-400">{inv.itemCount} items cleared</span>
+                          <span className="text-[10px] text-slate-400">{inv.items?.length || 1} items cleared</span>
                         </td>
                         <td className="py-3">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold ${
@@ -321,7 +308,7 @@ export const DashboardPage: React.FC = () => {
                           </span>
                         </td>
                         <td className="py-3 text-right font-bold text-slate-900 font-mono text-sm">
-                          ₹{inv.totalAmount.toFixed(2)}
+                          ₹{inv.netTotal.toFixed(2)}
                         </td>
                       </tr>
                     ))
@@ -332,7 +319,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>{RECENT_INVOICES.length > 0 ? `Showing latest ${RECENT_INVOICES.length} invoices cleared today` : 'Ready to start counter sales'}</span>
+            <span>{recentInvoices.length > 0 ? `Showing latest ${recentInvoices.length} invoices cleared today` : 'Ready to start counter sales'}</span>
             <button
               onClick={() => navigate('/billing')}
               className="text-sky-600 hover:text-sky-700 font-semibold flex items-center gap-1 cursor-pointer"

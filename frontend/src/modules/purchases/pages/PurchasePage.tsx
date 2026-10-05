@@ -24,43 +24,14 @@ export const PurchasePage: React.FC = () => {
 
   // Form State
   const [selectedSupplierId, setSelectedSupplierId] = useState(suppliers[0]?.id || '');
-  const [supplierName, setSupplierName] = useState(suppliers[0]?.name || 'Pune Pharma Distributors');
-  const [supplierInvoiceNumber, setSupplierInvoiceNumber] = useState('PPD-2026-1002');
+  const [supplierName, setSupplierName] = useState(suppliers[0]?.name || '');
+  const [supplierInvoiceNumber, setSupplierInvoiceNumber] = useState('');
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMode, setPaymentMode] = useState<PurchasePaymentMode>('BANK_TRANSFER');
-  const [notes, setNotes] = useState('Stock inward received and verified against physical challan.');
+  const [notes, setNotes] = useState('');
 
   // Items State
-  const [items, setItems] = useState<PurchaseInvoiceItem[]>([
-    {
-      id: 'pi-1',
-      lineNumber: 1,
-      medicineName: 'Dolo 650',
-      batchNumber: 'D9082',
-      expiryDate: '2027-09-30',
-      purchasePrice: 15.00,
-      mrp: 35.00,
-      sellingPrice: 32.00,
-      quantity: 50,
-      freeQuantity: 0,
-      gstRate: 12.00,
-      totalAmount: 840.00
-    },
-    {
-      id: 'pi-2',
-      lineNumber: 2,
-      medicineName: 'Pantoprazole 40',
-      batchNumber: 'P8812',
-      expiryDate: '2027-05-31',
-      purchasePrice: 80.00,
-      mrp: 120.00,
-      sellingPrice: 105.00,
-      quantity: 30,
-      freeQuantity: 0,
-      gstRate: 12.00,
-      totalAmount: 2688.00
-    }
-  ]);
+  const [items, setItems] = useState<PurchaseInvoiceItem[]>([]);
 
   // Modals
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -85,16 +56,16 @@ export const PurchasePage: React.FC = () => {
     const newItem: PurchaseInvoiceItem = {
       id: `pi-${Date.now()}`,
       lineNumber: nextLine,
-      medicineName: 'ORS Oral Rehydration',
-      batchNumber: `OR${Math.floor(100 + Math.random() * 900)}`,
-      expiryDate: '2027-11-30',
-      purchasePrice: 13.00,
-      mrp: 22.00,
-      sellingPrice: 20.00,
-      quantity: 20,
+      medicineName: '',
+      batchNumber: '',
+      expiryDate: '2028-12-31',
+      purchasePrice: 0.00,
+      mrp: 0.00,
+      sellingPrice: 0.00,
+      quantity: 1,
       freeQuantity: 0,
-      gstRate: 5.00,
-      totalAmount: 273.00
+      gstRate: 12.00,
+      totalAmount: 0.00
     };
     setItems([...items, newItem]);
   };
@@ -310,7 +281,18 @@ export const PurchasePage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {items.map((item, idx) => (
+                  {items.length === 0 ? (
+                    <tr>
+                      <td colSpan={11} className="py-12 text-center text-slate-400">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <PackagePlus className="w-8 h-8 text-slate-300 stroke-[1.5]" />
+                          <p className="font-semibold text-slate-600 text-sm">No items added to this inward invoice yet</p>
+                          <p className="text-[11px] text-slate-400">Click '+ Add Item Row' above to start entering received medicines.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    items.map((item, idx) => (
                     <tr key={item.id} className="hover:bg-slate-50/50">
                       <td className="p-3 text-slate-400 font-mono">{idx + 1}</td>
                       <td className="p-2">
@@ -393,8 +375,9 @@ export const PurchasePage: React.FC = () => {
                         </button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
+                  ))
+                )}
+              </tbody>
               </table>
             </div>
 

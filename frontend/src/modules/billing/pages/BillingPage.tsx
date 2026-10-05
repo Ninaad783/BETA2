@@ -133,7 +133,7 @@ export const BillingPage: React.FC = () => {
     if (actionType === 'print') {
       setShowPrintModal(true);
     } else if (actionType === 'whatsapp') {
-      setWhatsappMobile(selectedCustomer?.mobile || '9876543210');
+      setWhatsappMobile(selectedCustomer?.mobile || '');
       setShowWhatsAppModal(true);
     } else {
       // Save Bill
@@ -155,7 +155,7 @@ export const BillingPage: React.FC = () => {
   };
 
   const handleConfirmWhatsApp = () => {
-    const targetMobile = whatsappMobile || selectedCustomer?.mobile || '9876543210';
+    const targetMobile = whatsappMobile || selectedCustomer?.mobile || '';
     const itemsListText = cart
       .map((item, idx) => `${idx + 1}. ${item.medicineName} (${item.quantity}x) - ₹${item.total.toFixed(2)}`)
       .join('\n');
