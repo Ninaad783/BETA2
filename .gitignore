@@ -7,7 +7,7 @@ node_modules/
 !.env.example
 
 # Build output
-dist/
+frontend/dist/
 build/
 
 # Logs
