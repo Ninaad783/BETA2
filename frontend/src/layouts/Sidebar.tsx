@@ -46,7 +46,7 @@ export const Sidebar: React.FC = () => {
           </div>
           <div>
             <h2 className="text-white font-bold text-base leading-tight tracking-wide">MedEasy</h2>
-            <p className="text-xs text-emerald-400 font-medium">Khed Shivapur</p>
+            <p className="text-xs text-emerald-400 font-medium">Pharmacy OS</p>
           </div>
         </div>
         <button

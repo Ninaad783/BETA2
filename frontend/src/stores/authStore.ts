@@ -83,13 +83,13 @@ export const useAuthStore = create<AuthState>((set) => {
         }
       } catch (err: any) {
         // Fallback for offline dev or demo when database is not yet connected
-        if (username.trim() === 'admin_rahul' && password === 'password123') {
+        if ((username.trim() === 'ninaad_nk' || username.trim() === 'nk_007') && password === 'password123') {
           const demoUser: AuthUser = {
-            id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22',
+            id: '12a5ddc2-fde4-4a41-bb77-23d1bdc03126',
             storeId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-            username: 'admin_rahul',
-            fullName: 'Rahul Patil',
-            mobile: '9822334455',
+            username: username.trim(),
+            fullName: 'Ninaad Kumbhar',
+            mobile: '8380036778',
             role: 'ADMIN',
             preferredLanguage: 'mr',
           };

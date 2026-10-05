@@ -26,61 +26,7 @@ interface RecentInvoice {
   totalAmount: number;
 }
 
-const RECENT_INVOICES: RecentInvoice[] = [
-  {
-    id: 'inv-1',
-    invoiceNumber: 'INV-2026-0072',
-    time: '11:42 AM',
-    customerName: 'Walk-in Customer',
-    itemsSummary: 'Paracetamol 650mg, Pantoprazole 40',
-    itemCount: 2,
-    paymentMode: 'UPI',
-    totalAmount: 256.00,
-  },
-  {
-    id: 'inv-2',
-    invoiceNumber: 'INV-2026-0071',
-    time: '11:15 AM',
-    customerName: 'Suresh Shinde',
-    customerMobile: '9822112233',
-    itemsSummary: 'Azithromycin 500, ORS Sachet',
-    itemCount: 2,
-    paymentMode: 'CASH',
-    totalAmount: 345.00,
-  },
-  {
-    id: 'inv-3',
-    invoiceNumber: 'INV-2026-0070',
-    time: '10:50 AM',
-    customerName: 'Ramesh Deshmukh',
-    customerMobile: '9822334455',
-    itemsSummary: 'Dolo 650 (2 strips), Vitamin D3 60k',
-    itemCount: 3,
-    paymentMode: 'CASH',
-    totalAmount: 680.00,
-  },
-  {
-    id: 'inv-4',
-    invoiceNumber: 'INV-2026-0069',
-    time: '10:20 AM',
-    customerName: 'Sunita Jadhav',
-    customerMobile: '9890445566',
-    itemsSummary: 'Cetirizine 10, Cough Syrup',
-    itemCount: 2,
-    paymentMode: 'UPI',
-    totalAmount: 190.00,
-  },
-  {
-    id: 'inv-5',
-    invoiceNumber: 'INV-2026-0068',
-    time: '09:45 AM',
-    customerName: 'Walk-in Customer',
-    itemsSummary: 'Bandage, Antiseptic Cream',
-    itemCount: 2,
-    paymentMode: 'CARD',
-    totalAmount: 140.00,
-  },
-];
+const RECENT_INVOICES: RecentInvoice[] = [];
 
 export const DashboardPage: React.FC = () => {
   const { t } = useUIStore();
@@ -340,45 +286,53 @@ export const DashboardPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {RECENT_INVOICES.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-slate-50/70 transition">
-                      <td className="py-3 font-bold text-slate-900 font-mono">
-                        {inv.invoiceNumber}
-                        <span className="block text-[10px] text-slate-400 font-normal">{inv.time}</span>
-                      </td>
-                      <td className="py-3 text-slate-700">
-                        <span className="font-semibold block">{inv.customerName}</span>
-                        {inv.customerMobile && (
-                          <span className="text-[10px] text-slate-400 font-mono">{inv.customerMobile}</span>
-                        )}
-                      </td>
-                      <td className="py-3 text-slate-600">
-                        <span className="truncate max-w-[200px] block font-medium">{inv.itemsSummary}</span>
-                        <span className="text-[10px] text-slate-400">{inv.itemCount} items cleared</span>
-                      </td>
-                      <td className="py-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                          inv.paymentMode === 'UPI'
-                            ? 'bg-purple-50 text-purple-700 border border-purple-200/60'
-                            : inv.paymentMode === 'CARD'
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200/60'
-                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
-                        }`}>
-                          {inv.paymentMode}
-                        </span>
-                      </td>
-                      <td className="py-3 text-right font-bold text-slate-900 font-mono text-sm">
-                        ₹{inv.totalAmount.toFixed(2)}
+                  {RECENT_INVOICES.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-400">
+                        No counter invoices created yet. Counter sales will appear here in real-time.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    RECENT_INVOICES.map((inv) => (
+                      <tr key={inv.id} className="hover:bg-slate-50/70 transition">
+                        <td className="py-3 font-bold text-slate-900 font-mono">
+                          {inv.invoiceNumber}
+                          <span className="block text-[10px] text-slate-400 font-normal">{inv.time}</span>
+                        </td>
+                        <td className="py-3 text-slate-700">
+                          <span className="font-semibold block">{inv.customerName}</span>
+                          {inv.customerMobile && (
+                            <span className="text-[10px] text-slate-400 font-mono">{inv.customerMobile}</span>
+                          )}
+                        </td>
+                        <td className="py-3 text-slate-600">
+                          <span className="truncate max-w-[200px] block font-medium">{inv.itemsSummary}</span>
+                          <span className="text-[10px] text-slate-400">{inv.itemCount} items cleared</span>
+                        </td>
+                        <td className="py-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                            inv.paymentMode === 'UPI'
+                              ? 'bg-purple-50 text-purple-700 border border-purple-200/60'
+                              : inv.paymentMode === 'CARD'
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200/60'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                          }`}>
+                            {inv.paymentMode}
+                          </span>
+                        </td>
+                        <td className="py-3 text-right font-bold text-slate-900 font-mono text-sm">
+                          ₹{inv.totalAmount.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
 
           <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Showing latest {RECENT_INVOICES.length} invoices cleared today</span>
+            <span>{RECENT_INVOICES.length > 0 ? `Showing latest ${RECENT_INVOICES.length} invoices cleared today` : 'Ready to start counter sales'}</span>
             <button
               onClick={() => navigate('/billing')}
               className="text-sky-600 hover:text-sky-700 font-semibold flex items-center gap-1 cursor-pointer"

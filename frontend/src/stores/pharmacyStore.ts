@@ -81,61 +81,18 @@ interface PharmacyState {
 
 export const usePharmacyStore = create<PharmacyState>((set, get) => ({
   medicines: INITIAL_MEDICINES,
-  selectedMedicineId: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380d01',
+  selectedMedicineId: null,
   stockFilterTab: 'all',
   searchQuery: '',
   stockAdjustments: INITIAL_STOCK_ADJUSTMENTS,
 
-  cart: [
-    {
-      id: 'cart-1',
-      medicineId: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380d01',
-      medicineName: 'Dolo 650',
-      batchId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01',
-      batchNumber: 'D1234',
-      expiryDate: '08/2027',
-      mrp: 35.00,
-      sellingPrice: 32.00,
-      quantity: 2,
-      discountPercent: 0,
-      total: 64.00,
-      requiresPrescription: false
-    },
-    {
-      id: 'cart-2',
-      medicineId: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380d02',
-      medicineName: 'Pantoprazole 40',
-      batchId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e03',
-      batchNumber: 'P4567',
-      expiryDate: '01/2027',
-      mrp: 120.00,
-      sellingPrice: 105.00,
-      quantity: 1,
-      discountPercent: 0,
-      total: 105.00,
-      requiresPrescription: false
-    },
-    {
-      id: 'cart-3',
-      medicineId: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380d03',
-      medicineName: 'Azithromycin 500',
-      batchId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e04',
-      batchNumber: 'A7890',
-      expiryDate: '06/2026',
-      mrp: 95.00,
-      sellingPrice: 90.00,
-      quantity: 1,
-      discountPercent: 0,
-      total: 90.00,
-      requiresPrescription: true
-    }
-  ],
-  selectedCustomerId: 'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380f01',
+  cart: [],
+  selectedCustomerId: '',
   paymentMode: 'CASH',
   notes: '',
   doctorName: '',
   patientName: '',
-  invoiceCounter: 842,
+  invoiceCounter: 1001,
 
   customers: INITIAL_CUSTOMERS,
   suppliers: INITIAL_SUPPLIERS,

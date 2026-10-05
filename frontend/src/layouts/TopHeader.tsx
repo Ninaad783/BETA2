@@ -207,8 +207,8 @@ export const TopHeader: React.FC = () => {
                   <h4 className="font-bold text-xs tracking-wide">Live Pharmacy Alerts</h4>
                   <p className="text-[11px] text-slate-400 mt-0.5">Automated store warnings</p>
                 </div>
-                <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                  17 Critical
+                <span className="bg-sky-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  {stats.lowStockCount + stats.expiringSoonBatchesCount} Alerts
                 </span>
               </div>
 
@@ -221,7 +221,7 @@ export const TopHeader: React.FC = () => {
                   <div className="flex-1">
                     <p className="font-bold text-slate-900">Low Stock Warning</p>
                     <p className="text-slate-600 text-[11px] mt-0.5">
-                      {stats.lowStockCount} medicines are below minimum threshold (e.g. Pantoprazole 40, ORS).
+                      {stats.lowStockCount} medicines currently below minimum reorder alert threshold.
                     </p>
                     <span className="text-[10px] text-amber-700 font-semibold mt-1 inline-block">Action: Reorder list generated</span>
                   </div>

@@ -3,7 +3,7 @@ export type Language = 'en' | 'mr';
 export const translations = {
   en: {
     appName: 'MedEasy',
-    storeLocation: 'Khed Shivapur',
+    storeLocation: 'Pharmacy OS',
     tagline: 'Your Local Medical Store Partner',
     subTagline: 'Simple Billing • Smart Stock • Better Business',
     
@@ -136,7 +136,7 @@ export const translations = {
   },
   mr: {
     appName: 'मेडिईझी (MedEasy)',
-    storeLocation: 'खेड शिवापूर',
+    storeLocation: 'फार्मसी ओएस',
     tagline: 'आपले स्थानिक मेडिकल स्टोअर भागीदार',
     subTagline: 'जलद बिलिंग • अचूक स्टॉक • अधिक नफा',
     

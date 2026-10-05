@@ -98,7 +98,7 @@ export const CustomerDetailsPage: React.FC = () => {
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-slate-400" /> {customer.address || 'Khed Shivapur'}
+                <MapPin className="w-3 h-3 text-slate-400" /> {customer.address || '—'}
               </span>
             </p>
           </div>

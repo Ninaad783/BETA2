@@ -95,13 +95,13 @@ export const login = async (req: AuthenticatedRequest, res: Response): Promise<v
     });
   } catch (error: any) {
     // Dev fallback if PostgreSQL credentials are not yet configured in local .env
-    if (username.trim() === 'admin_rahul' && password === 'password123') {
+    if ((username.trim() === 'ninaad_nk' || username.trim() === 'nk_007') && password === 'password123') {
       const demoUser: AuthUserDTO = {
-        id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22',
+        id: '12a5ddc2-fde4-4a41-bb77-23d1bdc03126',
         storeId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-        username: 'admin_rahul',
-        fullName: 'Rahul Patil',
-        mobile: '9822334455',
+        username: username.trim(),
+        fullName: 'Ninaad Kumbhar',
+        mobile: '8380036778',
         role: 'ADMIN',
         preferredLanguage: 'mr',
       };
@@ -156,14 +156,14 @@ export const getMe = async (req: AuthenticatedRequest, res: Response): Promise<v
             id: req.user.userId,
             storeId: req.user.storeId,
             username: req.user.username,
-            fullName: 'Rahul Patil',
-            mobile: '9822334455',
+            fullName: 'Ninaad Kumbhar',
+            mobile: '8380036778',
             role: req.user.role,
             preferredLanguage: 'mr',
           },
           store: {
             id: req.user.storeId,
-            store_name: 'MedEasy Khed Shivapur Medical',
+            store_name: 'MedEasy Pharmacy',
           },
         });
         return;
@@ -193,14 +193,14 @@ export const getMe = async (req: AuthenticatedRequest, res: Response): Promise<v
           id: req.user.userId,
           storeId: req.user.storeId,
           username: req.user.username,
-          fullName: 'Rahul Patil',
-          mobile: '9822334455',
+          fullName: 'Ninaad Kumbhar',
+          mobile: '8380036778',
           role: req.user.role,
           preferredLanguage: 'mr',
         },
         store: {
           id: req.user.storeId,
-          store_name: 'MedEasy Khed Shivapur Medical',
+          store_name: 'MedEasy Pharmacy',
         },
       });
       return;

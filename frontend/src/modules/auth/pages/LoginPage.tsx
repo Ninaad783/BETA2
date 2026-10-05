@@ -10,8 +10,8 @@ export const LoginPage: React.FC = () => {
   const { login, isLoading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState('admin_rahul');
-  const [password, setPassword] = useState('password123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -127,7 +127,7 @@ export const LoginPage: React.FC = () => {
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">MedEasy</h1>
           <p className="text-xs text-slate-500 mt-1">
-            {t('tagline')} • <span className="font-semibold text-slate-700">Khed Shivapur</span>
+            {t('tagline')} • <span className="font-semibold text-slate-700">Pharmacy OS</span>
           </p>
         </div>
 

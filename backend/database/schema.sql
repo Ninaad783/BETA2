@@ -283,43 +283,32 @@ INSERT INTO pharmacy_stores (
     thermal_header, thermal_footer
 ) VALUES (
     'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    'MedEasy Khed Shivapur Medical',
-    'MH-PUN-2024-DL9012',
-    '27AABCM9876E1Z4',
-    '+91 9822334455',
-    '+91 9822334455',
-    'contact@medeasypharmacy.in',
-    'Shop No. 4, Gram Panchayat Complex, Pune-Bangalore Highway',
-    'Khed Shivapur',
-    'Pune',
+    'MedEasy Pharmacy',
+    '',
+    '',
+    '8380036778',
+    '8380036778',
+    '',
+    '',
+    '',
+    '',
     'Maharashtra',
-    '412205',
-    'MedEasy Khed Shivapur Medical\nPrompt Care & Quality Medicines',
-    'Thank you for your visit! Get well soon.\nMedicines once sold cannot be returned without bill.'
+    '',
+    'MEDEASY PHARMACY',
+    'Thank you for your visit! Wishing you good health.'
 ) ON CONFLICT (id) DO NOTHING;
 
--- Demo User: Rahul Patil (Admin). Password: password123
--- Bcrypt hash generated with 10 salt rounds
+-- Primary Admin User: Ninaad Kumbhar (Admin). Default password: password123
 INSERT INTO users (
     id, store_id, username, password_hash, full_name, mobile, role, preferred_language
 ) VALUES
 (
-    'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22',
+    '12a5ddc2-fde4-4a41-bb77-23d1bdc03126',
     'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    'admin_rahul',
+    'ninaad_nk',
     '$2b$10$PD3lBUoaEi1Z8owWsWRqaedep8cAaE4vreGWkXv8LblZ2VkTypYNy',
-    'Rahul Patil',
-    '9822334455',
+    'Ninaad Kumbhar',
+    '8380036778',
     'ADMIN',
     'mr'
-),
-(
-    'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b33',
-    'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    'staff_sachin',
-    '$2b$10$PD3lBUoaEi1Z8owWsWRqaedep8cAaE4vreGWkXv8LblZ2VkTypYNy',
-    'Sachin More',
-    '9850123456',
-    'STAFF',
-    'mr'
-) ON CONFLICT (id) DO NOTHING;
+) ON CONFLICT (store_id, username) DO NOTHING;

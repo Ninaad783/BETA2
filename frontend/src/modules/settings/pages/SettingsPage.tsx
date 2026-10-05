@@ -139,7 +139,8 @@ export const SettingsPage: React.FC = () => {
                 <label className="block font-semibold text-slate-700 mb-1">Medical Store Name</label>
                 <input
                   type="text"
-                  defaultValue="MedEasy Khed Shivapur Medical"
+                  defaultValue="MedEasy Pharmacy"
+                  placeholder="e.g. MedEasy Pharmacy"
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                 />
               </div>
@@ -147,7 +148,7 @@ export const SettingsPage: React.FC = () => {
                 <label className="block font-semibold text-slate-700 mb-1">Drug License (DL) Number</label>
                 <input
                   type="text"
-                  defaultValue="MH-PUN-2024-DL9012"
+                  placeholder="e.g. MH-PUN-2026-DL1234"
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                 />
               </div>
@@ -155,7 +156,7 @@ export const SettingsPage: React.FC = () => {
                 <label className="block font-semibold text-slate-700 mb-1">GSTIN Number</label>
                 <input
                   type="text"
-                  defaultValue="27AABCM9876E1Z4"
+                  placeholder="e.g. 27AABCM1234E1Z1"
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                 />
               </div>
@@ -163,7 +164,7 @@ export const SettingsPage: React.FC = () => {
                 <label className="block font-semibold text-slate-700 mb-1">Primary Mobile No</label>
                 <input
                   type="tel"
-                  defaultValue="+91 9822334455"
+                  defaultValue="+91 8380036778"
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                 />
               </div>
@@ -171,7 +172,7 @@ export const SettingsPage: React.FC = () => {
                 <label className="block font-semibold text-slate-700 mb-1">WhatsApp Billing No</label>
                 <input
                   type="tel"
-                  defaultValue="+91 9822334455"
+                  defaultValue="+91 8380036778"
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                 />
               </div>
@@ -179,7 +180,7 @@ export const SettingsPage: React.FC = () => {
                 <label className="block font-semibold text-slate-700 mb-1">Store Address</label>
                 <input
                   type="text"
-                  defaultValue="Shop #4, Near ST Stand, Khed Shivapur, Pune 412205"
+                  placeholder="Enter shop address & location"
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                 />
               </div>
@@ -197,7 +198,7 @@ export const SettingsPage: React.FC = () => {
                 <label className="block font-semibold text-slate-700 mb-1">Receipt Header Line</label>
                 <input
                   type="text"
-                  defaultValue="MEDEASY PHARMACY - KHED SHIVAPUR"
+                  defaultValue="MEDEASY PHARMACY"
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                 />
               </div>

@@ -47,7 +47,7 @@ export const CustomersPage: React.FC = () => {
   const handleCreateCustomer = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !mobile) return;
-    addCustomer({ fullName: name, mobile, address: address || 'Khed Shivapur' });
+    addCustomer({ fullName: name, mobile, address: address || '' });
     setShowAddModal(false);
     setName('');
     setMobile('');
@@ -206,7 +206,7 @@ export const CustomersPage: React.FC = () => {
                   <td className="p-3 text-slate-500">
                     <span className="flex items-center gap-1 text-[11px] truncate max-w-[180px]">
                       <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                      {cust.address || 'Khed Shivapur'}
+                      {cust.address || '—'}
                     </span>
                   </td>
                   <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
@@ -294,7 +294,7 @@ export const CustomersPage: React.FC = () => {
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="e.g. Khed Shivapur gaothan"
+                placeholder="e.g. MG Road, Near Bus Station"
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white font-medium focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none"
               />
             </div>

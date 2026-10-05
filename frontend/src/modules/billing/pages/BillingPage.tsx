@@ -124,7 +124,7 @@ export const BillingPage: React.FC = () => {
 
     const messageText = 
       `🧾 *MEDEASY PHARMACY - TAX INVOICE*\n` +
-      `📍 Khed Shivapur Store #1, Pune\n` +
+      `📍 MedEasy Pharmacy\n` +
       `Invoice: *#${currentInvoiceNo}*\n` +
       `Date: ${new Date().toLocaleDateString('en-IN')}\n` +
       `Customer: ${selectedCustomer?.fullName || patientName || 'Walk-in Customer'}\n` +
@@ -156,7 +156,7 @@ export const BillingPage: React.FC = () => {
     addCustomer({
       fullName: newCustName,
       mobile: newCustMobile,
-      address: newCustAddress || 'Khed Shivapur'
+      address: newCustAddress || ''
     });
     setShowNewCustomerModal(false);
     setNewCustName('');
@@ -567,10 +567,9 @@ export const BillingPage: React.FC = () => {
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 font-mono text-slate-800 space-y-3 shadow-inner">
             {/* Store Header */}
             <div className="text-center border-b border-dashed border-slate-300 pb-3">
-              <h4 className="font-black text-base tracking-wider text-slate-900">MEDEASY MEDICAL STORE</h4>
-              <p className="text-[11px] text-slate-500">Khed Shivapur Main Road, Haveli, Pune - 412205</p>
-              <p className="text-[10px] text-slate-400">DL: MH-PUN-2024-DL9012 • GSTIN: 27AABCM9876E1Z4</p>
-              <p className="text-[10px] text-slate-500 mt-1">Ph: +91 9822334455 / 9850123456</p>
+              <h4 className="font-black text-base tracking-wider text-slate-900">MEDEASY PHARMACY</h4>
+              <p className="text-[11px] text-slate-500">Retail Tax Invoice</p>
+              <p className="text-[10px] text-slate-500 mt-1">Ph: +91 8380036778</p>
             </div>
 
             {/* Meta Row */}
@@ -692,7 +691,7 @@ export const BillingPage: React.FC = () => {
 
             <div className="bg-white p-3.5 rounded-2xl rounded-tl-none shadow-xs text-slate-800 space-y-2 font-mono text-[11px] border border-slate-100">
               <p className="font-bold text-emerald-800">🧾 *MEDEASY PHARMACY - TAX INVOICE*</p>
-              <p className="text-slate-500 text-[10px]">📍 Khed Shivapur Store #1, Pune</p>
+              <p className="text-slate-500 text-[10px]">📍 MedEasy Pharmacy</p>
               <p>Invoice: <strong>#{currentInvoiceNo}</strong></p>
               <p>Date: {new Date().toLocaleDateString('en-IN')}</p>
               <p>Customer: <strong>{selectedCustomer?.fullName || patientName || 'Walk-in Customer'}</strong></p>
