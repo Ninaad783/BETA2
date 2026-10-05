@@ -8,7 +8,8 @@ import type {
   PaymentMode, 
   PurchaseInvoice, 
   Supplier,
-  StockAdjustment 
+  StockAdjustment,
+  SaleInvoice 
 } from '../types/pharmacy.types';
 import { 
   INITIAL_CUSTOMERS, 
@@ -40,6 +41,7 @@ interface PharmacyState {
   customers: Customer[];
   suppliers: Supplier[];
   purchases: PurchaseInvoice[];
+  salesInvoices: SaleInvoice[];
 
   // Daily Dashboard Stats (v_today_counter_analytics)
   stats: DailyStats;
@@ -98,6 +100,7 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
   customers: INITIAL_CUSTOMERS,
   suppliers: INITIAL_SUPPLIERS,
   purchases: INITIAL_PURCHASES,
+  salesInvoices: [],
   stats: INITIAL_STATS,
 
   setStockFilterTab: (tab) => set({ stockFilterTab: tab }),
@@ -218,7 +221,7 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
   setNotes: (notes) => set({ notes: notes }),
 
   checkoutCurrentBill: () => {
-    const { cart, selectedCustomerId, medicines, customers, stats, invoiceCounter } = get();
+    const { cart, selectedCustomerId, medicines, customers, stats, invoiceCounter, doctorName, patientName, paymentMode } = get();
     if (cart.length === 0) return { success: false, invoiceNumber: '', total: 0 };
 
     const total = cart.reduce((sum, item) => sum + item.total, 0);
@@ -275,10 +278,39 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
       todayBillsCount: stats.todayBillsCount + 1
     };
 
+    // 4. Record real SaleInvoice
+    const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
+    const itemsSummary = cart
+      .map((item) => `${item.medicineName} (${item.quantity}x)`)
+      .join(', ');
+
+    const newInvoice: SaleInvoice = {
+      id: `inv-${Date.now()}`,
+      invoiceNumber,
+      customerId: selectedCustomerId || undefined,
+      customerName: selectedCustomer?.fullName || patientName || 'Walk-in Customer',
+      customerMobile: selectedCustomer?.mobile,
+      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      doctorName: doctorName || undefined,
+      patientName: patientName || undefined,
+      itemsSummary,
+      items: [...cart],
+      subtotal: Number(total.toFixed(2)),
+      discountAmount: 0,
+      gstAmount: Number((total * 0.12).toFixed(2)),
+      netTotal: Number(total.toFixed(2)),
+      paymentMode,
+      status: 'COMPLETED',
+      createdAt: new Date().toISOString()
+    };
+
+    const { salesInvoices } = get();
+
     set({
       medicines: updatedMedicines,
       customers: updatedCustomers,
       stats: updatedStats,
+      salesInvoices: [newInvoice, ...(salesInvoices || [])],
       cart: [],
       doctorName: '',
       patientName: '',

@@ -78,6 +78,26 @@ export interface CustomerInvoiceItem {
   status: 'COMPLETED' | 'CANCELLED';
 }
 
+export interface SaleInvoice {
+  id: string;
+  invoiceNumber: string;
+  customerId?: string;
+  customerName?: string;
+  customerMobile?: string;
+  date: string;
+  doctorName?: string;
+  patientName?: string;
+  itemsSummary: string;
+  items: CartItem[];
+  subtotal: number;
+  discountAmount: number;
+  gstAmount: number;
+  netTotal: number;
+  paymentMode: PaymentMode;
+  status: 'COMPLETED' | 'CANCELLED';
+  createdAt: string;
+}
+
 // Suppliers - No Udhaar/Credit balance stored. Invoices are paid at purchase.
 export interface Supplier {
   id: string;

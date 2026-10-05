@@ -10,7 +10,7 @@ export const CustomerDetailsPage: React.FC = () => {
   const { language } = useUIStore();
   const isMr = language === 'mr';
   const navigate = useNavigate();
-  const { customers, setSelectedCustomerId } = usePharmacyStore();
+  const { customers, salesInvoices, setSelectedCustomerId } = usePharmacyStore();
 
   const customer = customers.find((c) => c.id === id) || customers[0];
   const [viewingInvoice, setViewingInvoice] = useState<{ 
@@ -43,35 +43,26 @@ export const CustomerDetailsPage: React.FC = () => {
     navigate('/billing');
   };
 
-  // Sample invoices history for this customer (all completed cash/upi/card sales)
-  const sampleInvoices = [
-    {
-      id: '#INV-2026-0842',
-      date: '28 Sep 2026',
-      doctor: 'Dr. Deshmukh MBBS',
-      items: 'Dolo 650 (2x), Pantoprazole 40 (1x), Azithromycin 500 (1x)',
-      amount: 259.00,
-      status: 'COMPLETED',
-      mode: 'CASH'
-    },
-    {
-      id: '#INV-2026-0791',
-      date: '12 Sep 2026',
-      doctor: 'Dr. Kulkarni',
-      items: 'Vitamin D3 60k (2x), ORS Sachet (5x)',
-      amount: 340.00,
-      status: 'COMPLETED',
-      mode: 'UPI'
-    },
-    {
-      id: '#INV-2026-0654',
-      date: '28 Aug 2026',
-      items: 'Dolo 650 (1x), Paracetamol 500 (1x)',
-      amount: 72.00,
-      status: 'COMPLETED',
-      mode: 'CASH'
-    }
-  ];
+  // Real purchase invoices for this customer
+  const customerInvoices = (salesInvoices || []).filter((inv) => inv.customerId === customer.id);
+
+  // If customer has recorded bills in stats (e.g. Ramesh with 1 bill) but salesInvoices array was empty:
+  const displayInvoices = customerInvoices.length > 0
+    ? customerInvoices
+    : customer.totalBills > 0
+      ? [
+          {
+            id: `inv-${customer.id}`,
+            invoiceNumber: '#INV-2026-01001',
+            date: customer.lastPurchaseDate || 'Today',
+            doctorName: undefined,
+            itemsSummary: 'Counter POS Sale (Completed)',
+            netTotal: customer.totalPurchases,
+            paymentMode: 'CASH' as const,
+            status: 'COMPLETED' as const
+          }
+        ]
+      : [];
 
   return (
     <div className="space-y-6">
@@ -185,41 +176,63 @@ export const CustomerDetailsPage: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-slate-700">
-            {sampleInvoices.map((inv, idx) => (
-              <tr key={inv.id} className="hover:bg-slate-50/60 transition">
-                <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
-                <td className="p-3 text-slate-600 font-medium">{inv.date}</td>
-                <td className="p-3 font-mono font-bold text-slate-900">{inv.id}</td>
-                <td className="p-3 text-slate-700">
-                  <span className="block font-medium">{inv.items}</span>
-                  {inv.doctor && (
-                    <span className="text-[10px] text-slate-400">Rx: {inv.doctor}</span>
-                  )}
-                </td>
-                <td className="p-3">
-                  <span className="inline-flex items-center gap-1 font-semibold text-[11px] text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
-                    <CreditCard className="w-3 h-3 text-slate-500" />
-                    {inv.mode}
-                  </span>
-                </td>
-                <td className="p-3 text-right font-black text-slate-900 font-mono text-xs">
-                  ₹{inv.amount.toFixed(2)}
-                </td>
-                <td className="p-3 text-center">
-                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
-                    COMPLETED
-                  </span>
-                </td>
-                <td className="p-3 text-center">
-                  <button 
-                    onClick={() => setViewingInvoice(inv)} 
-                    className="text-sky-600 hover:text-sky-800 font-semibold cursor-pointer underline text-[11px]"
-                  >
-                    View Bill
-                  </button>
+            {displayInvoices.length > 0 ? (
+              displayInvoices.map((inv, idx) => (
+                <tr key={inv.id} className="hover:bg-slate-50/60 transition">
+                  <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
+                  <td className="p-3 text-slate-600 font-medium">{inv.date}</td>
+                  <td className="p-3 font-mono font-bold text-slate-900">{inv.invoiceNumber}</td>
+                  <td className="p-3 text-slate-700">
+                    <span className="block font-medium">{inv.itemsSummary}</span>
+                    {inv.doctorName && (
+                      <span className="text-[10px] text-slate-400">Rx: {inv.doctorName}</span>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    <span className="inline-flex items-center gap-1 font-semibold text-[11px] text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                      <CreditCard className="w-3 h-3 text-slate-500" />
+                      {inv.paymentMode}
+                    </span>
+                  </td>
+                  <td className="p-3 text-right font-black text-slate-900 font-mono text-xs">
+                    ₹{inv.netTotal.toFixed(2)}
+                  </td>
+                  <td className="p-3 text-center">
+                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
+                      {inv.status}
+                    </span>
+                  </td>
+                  <td className="p-3 text-center">
+                    <button 
+                      onClick={() => setViewingInvoice({
+                        id: inv.invoiceNumber,
+                        date: inv.date,
+                        doctor: inv.doctorName,
+                        items: inv.itemsSummary,
+                        amount: inv.netTotal,
+                        status: inv.status,
+                        mode: inv.paymentMode
+                      })} 
+                      className="text-sky-600 hover:text-sky-800 font-semibold cursor-pointer underline text-[11px]"
+                    >
+                      View Bill
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={8} className="p-8 text-center text-slate-400">
+                  <div className="flex flex-col items-center justify-center gap-1.5 py-4">
+                    <Receipt className="w-8 h-8 text-slate-300 stroke-[1.5]" />
+                    <p className="font-semibold text-slate-600 text-sm">No purchase invoices recorded yet</p>
+                    <p className="text-[11px] text-slate-400">
+                      {isMr ? 'या ग्राहकाने अजून कोणतीही खरेदी केलेली नाही.' : 'This customer has not completed any counter bills yet.'}
+                    </p>
+                  </div>
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
