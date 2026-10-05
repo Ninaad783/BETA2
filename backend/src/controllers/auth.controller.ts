@@ -423,3 +423,85 @@ export const getUsers = async (req: AuthenticatedRequest, res: Response): Promis
   }
 };
 
+/**
+ * POST /api/auth/forgot-password
+ * Public: Resets password by verifying username and registered mobile number
+ * Body: { username, mobile, newPassword }
+ */
+export const forgotPassword = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const { username, mobile, newPassword } = req.body;
+
+  if (!username || !newPassword) {
+    res.status(400).json({
+      success: false,
+      message: 'Username and new password are required',
+    });
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    res.status(400).json({
+      success: false,
+      message: 'New password must be at least 6 characters long',
+    });
+    return;
+  }
+
+  try {
+    const userRes = await pool.query<UserRow>(
+      `SELECT * FROM users WHERE username = $1 AND is_active = true LIMIT 1;`,
+      [username.trim()]
+    );
+
+    const user = userRes.rows[0];
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: `No active account found for username '${username.trim()}'`,
+      });
+      return;
+    }
+
+    // Verify mobile number if user has registered mobile
+    if (user.mobile && mobile) {
+      const cleanUserMobile = user.mobile.replace(/\D/g, '');
+      const cleanInputMobile = String(mobile).replace(/\D/g, '');
+      if (cleanUserMobile.slice(-10) !== cleanInputMobile.slice(-10)) {
+        res.status(401).json({
+          success: false,
+          message: 'Registered mobile number does not match account records',
+        });
+        return;
+      }
+    } else if (user.mobile && !mobile) {
+      res.status(400).json({
+        success: false,
+        message: 'Please provide the registered mobile number for identity verification',
+      });
+      return;
+    }
+
+    // Hash new password
+    const saltRounds = 10;
+    const newHash = await bcrypt.hash(newPassword, saltRounds);
+
+    await pool.query(
+      `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2;`,
+      [newHash, user.id]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `Password for @${user.username} has been reset successfully! You can now log in.`,
+    });
+  } catch (error: any) {
+    console.error('Error in /api/auth/forgot-password:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reset password',
+      error: error.message,
+    });
+  }
+};
+
+
