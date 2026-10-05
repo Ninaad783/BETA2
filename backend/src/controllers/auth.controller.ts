@@ -291,3 +291,135 @@ export const logout = async (_req: AuthenticatedRequest, res: Response): Promise
     message: 'Logged out successfully',
   });
 };
+
+/**
+ * POST /api/auth/register
+ * Body: { username, password, fullName, role, mobile, preferredLanguage, storeId }
+ */
+export const register = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const { username, password, fullName, role = 'STAFF', mobile, preferredLanguage = 'mr', storeId } = req.body;
+
+  if (!username || !password || !fullName) {
+    res.status(400).json({
+      success: false,
+      message: 'Username, password, and fullName are required',
+    });
+    return;
+  }
+
+  if (password.length < 6) {
+    res.status(400).json({
+      success: false,
+      message: 'Password must be at least 6 characters long',
+    });
+    return;
+  }
+
+  try {
+    let targetStoreId = req.user?.storeId || storeId;
+    if (!targetStoreId) {
+      const storeRes = await pool.query('SELECT id FROM pharmacy_stores LIMIT 1');
+      targetStoreId = storeRes.rows[0]?.id;
+    }
+
+    if (!targetStoreId) {
+      res.status(400).json({
+        success: false,
+        message: 'No pharmacy store found to attach user to',
+      });
+      return;
+    }
+
+    // Check existing username
+    const existing = await pool.query(
+      `SELECT id FROM users WHERE username = $1 AND store_id = $2;`,
+      [username.trim(), targetStoreId]
+    );
+
+    if (existing.rows.length > 0) {
+      res.status(409).json({
+        success: false,
+        message: `Username '${username.trim()}' is already taken in this store`,
+      });
+      return;
+    }
+
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    const insertResult = await pool.query<UserRow>(
+      `INSERT INTO users (store_id, username, password_hash, full_name, mobile, role, preferred_language)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *;`,
+      [
+        targetStoreId,
+        username.trim(),
+        passwordHash,
+        fullName.trim(),
+        mobile || null,
+        role,
+        preferredLanguage,
+      ]
+    );
+
+    const newUser = insertResult.rows[0];
+
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      user: toAuthUserDTO(newUser),
+    });
+  } catch (error: any) {
+    console.error('Error in /api/auth/register:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to register user',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * GET /api/auth/users
+ * Protected: Returns staff list
+ */
+export const getUsers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const storeId = req.user?.storeId;
+
+  try {
+    let query = `SELECT id, store_id, username, full_name, mobile, role, preferred_language, is_active, last_login_at, created_at FROM users`;
+    const params: any[] = [];
+
+    if (storeId) {
+      query += ` WHERE store_id = $1`;
+      params.push(storeId);
+    }
+    query += ` ORDER BY created_at ASC;`;
+
+    const result = await pool.query(query, params);
+
+    res.status(200).json({
+      success: true,
+      users: result.rows.map((row) => ({
+        id: row.id,
+        storeId: row.store_id,
+        username: row.username,
+        fullName: row.full_name,
+        mobile: row.mobile,
+        role: row.role,
+        preferredLanguage: row.preferred_language,
+        isActive: row.is_active,
+        lastLoginAt: row.last_login_at,
+        createdAt: row.created_at,
+      })),
+    });
+  } catch (error: any) {
+    console.error('Error in /api/auth/users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve users',
+      error: error.message,
+    });
+  }
+};
+
