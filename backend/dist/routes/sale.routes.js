@@ -1,0 +1,9 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.saleRouter = void 0;
+const express_1 = require("express");
+const sale_controller_1 = require("../controllers/sale.controller");
+exports.saleRouter = (0, express_1.Router)();
+exports.saleRouter.post('/', sale_controller_1.createSaleInvoice);
+exports.saleRouter.get('/', sale_controller_1.getSaleInvoices);
+exports.saleRouter.get('/:id', sale_controller_1.getSaleInvoiceById);

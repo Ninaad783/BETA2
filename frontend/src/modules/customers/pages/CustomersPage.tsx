@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, 
@@ -21,7 +21,11 @@ export const CustomersPage: React.FC = () => {
   const { t, language } = useUIStore();
   const isMr = language === 'mr';
   const navigate = useNavigate();
-  const { customers, addCustomer, setSelectedCustomerId } = usePharmacyStore();
+  const { customers, addCustomer, setSelectedCustomerId, fetchCustomers } = usePharmacyStore();
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
 
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);

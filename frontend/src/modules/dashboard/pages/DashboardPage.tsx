@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, 
@@ -17,8 +17,13 @@ import { usePharmacyStore } from '../../../stores/pharmacyStore';
 export const DashboardPage: React.FC = () => {
   const { t } = useUIStore();
   const navigate = useNavigate();
-  const { stats, salesInvoices } = usePharmacyStore();
+  const { stats, salesInvoices, fetchSales, fetchCustomers } = usePharmacyStore();
   const recentInvoices = (salesInvoices || []).slice(0, 5);
+
+  useEffect(() => {
+    fetchSales();
+    fetchCustomers();
+  }, [fetchSales, fetchCustomers]);
 
   return (
     <div className="space-y-6">

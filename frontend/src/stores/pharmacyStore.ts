@@ -19,6 +19,7 @@ import {
   INITIAL_SUPPLIERS,
   INITIAL_STOCK_ADJUSTMENTS
 } from '../lib/mockData';
+import { API_BASE_URL } from '../lib/apiClient';
 
 interface PharmacyState {
   // Inventory
@@ -73,7 +74,13 @@ interface PharmacyState {
   addBatchToMedicine: (medicineId: string, batchData: Omit<MedicineBatch, 'id' | 'medicineId'>) => void;
 
   // Customer actions
-  addCustomer: (customer: Omit<Customer, 'id' | 'totalPurchases' | 'totalBills' | 'lastPurchaseDate'>) => void;
+  addCustomer: (customer: Omit<Customer, 'id' | 'totalPurchases' | 'totalBills' | 'lastPurchaseDate'>) => Promise<void>;
+  fetchCustomers: () => Promise<void>;
+  isLoadingCustomers: boolean;
+
+  // Sales actions
+  fetchSales: () => Promise<void>;
+  isLoadingSales: boolean;
 
   // Supplier actions
   addSupplier: (supplier: Omit<Supplier, 'id'>) => void;
@@ -98,9 +105,11 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
   invoiceCounter: 1001,
 
   customers: INITIAL_CUSTOMERS,
+  isLoadingCustomers: false,
   suppliers: INITIAL_SUPPLIERS,
   purchases: INITIAL_PURCHASES,
   salesInvoices: [],
+  isLoadingSales: false,
   stats: INITIAL_STATS,
 
   setStockFilterTab: (tab) => set({ stockFilterTab: tab }),
@@ -317,6 +326,53 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
       invoiceCounter: invoiceCounter + 1
     });
 
+    // 5. Asynchronously persist invoice to PostgreSQL backend
+    try {
+      const token = localStorage.getItem('medeasy_auth_token');
+      const payload = {
+        customerId: selectedCustomerId || undefined,
+        customerName: selectedCustomer?.fullName || patientName || 'Walk-in Customer',
+        customerMobile: selectedCustomer?.mobile,
+        doctorName: doctorName || undefined,
+        patientName: patientName || undefined,
+        paymentMode,
+        notes: get().notes,
+        items: cart.map((it) => ({
+          medicineId: it.medicineId,
+          batchId: it.batchId,
+          medicineName: it.medicineName,
+          batchNumber: it.batchNumber,
+          expiryDate: it.expiryDate,
+          quantity: it.quantity,
+          mrp: it.mrp,
+          sellingPrice: it.sellingPrice,
+          discountPercent: it.discountPercent,
+          gstRate: (it as any).gstRate || 12.0,
+          total: it.total
+        })),
+        subtotal: total,
+        netTotal: total
+      };
+
+      fetch(`${API_BASE_URL}/api/sales`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      }).then(async (res) => {
+        if (res.ok) {
+          get().fetchCustomers();
+          get().fetchSales();
+        }
+      }).catch((err) => {
+        console.error('Async sale persistence failed:', err);
+      });
+    } catch (e) {
+      console.error('Failed to dispatch sale sync:', e);
+    }
+
     return { success: true, invoiceNumber, total };
   },
 
@@ -465,10 +521,11 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
     });
   },
 
-  addCustomer: (customerData) => {
+  addCustomer: async (customerData) => {
+    const tempId = `cust-${Date.now()}`;
     const newCustomer: Customer = {
       ...customerData,
-      id: `cust-${Date.now()}`,
+      id: tempId,
       totalPurchases: 0,
       totalBills: 0,
       lastPurchaseDate: 'None',
@@ -482,6 +539,82 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
         totalCustomersCount: state.stats.totalCustomersCount + 1
       }
     }));
+
+    try {
+      const token = localStorage.getItem('medeasy_auth_token');
+      const res = await fetch(`${API_BASE_URL}/api/customers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(customerData)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.customer) {
+          set((state) => ({
+            customers: state.customers.map((c) => c.id === tempId ? data.customer : c)
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to sync new customer to backend:', err);
+    }
+  },
+
+  fetchCustomers: async () => {
+    set({ isLoadingCustomers: true });
+    try {
+      const token = localStorage.getItem('medeasy_auth_token');
+      const res = await fetch(`${API_BASE_URL}/api/customers`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.customers && data.customers.length > 0) {
+          set((state) => ({
+            customers: data.customers,
+            stats: {
+              ...state.stats,
+              totalCustomersCount: data.customers.length
+            }
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch customers from backend:', err);
+    } finally {
+      set({ isLoadingCustomers: false });
+    }
+  },
+
+  fetchSales: async () => {
+    set({ isLoadingSales: true });
+    try {
+      const token = localStorage.getItem('medeasy_auth_token');
+      const res = await fetch(`${API_BASE_URL}/api/sales`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.invoices) {
+          set((state) => ({
+            salesInvoices: data.invoices,
+            stats: {
+              ...state.stats,
+              todaySales: data.stats?.todaySales ?? state.stats.todaySales,
+              todayBillsCount: data.stats?.todayBillsCount ?? state.stats.todayBillsCount,
+              todayProfit: data.stats?.todayProfit ?? state.stats.todayProfit
+            }
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch sales from backend:', err);
+    } finally {
+      set({ isLoadingSales: false });
+    }
   },
 
   addPurchase: (purchaseData) => {
@@ -557,3 +690,12 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
     }));
   }
 }));
+
+// Auto-load customers and sales from backend when app boots
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    usePharmacyStore.getState().fetchCustomers();
+    usePharmacyStore.getState().fetchSales();
+  }, 100);
+}
+

@@ -126,7 +126,72 @@ def run_tests():
         has_store_match = any(m.get("batch_number") == "BATCH-TEST-AUTO-01" for m in res_verify.get("storeMatches", []))
         test("VERIFY: Inwarded medicine appears in storeMatches (In Stock)", 200, code, has_store_match)
 
-    # 14. Forgot Password Flow
+    # 14. Customer Management Endpoints
+    cust_data = {
+        "fullName": "Ramesh Patil",
+        "mobile": "9876543210",
+        "address": "Shivaji Nagar, Kolhapur"
+    }
+    code, res_cust = make_request("/api/customers", method="POST", data=cust_data, token=admin_token)
+    test("POST /api/customers (Create/Upsert Customer)", 201, code, res_cust.get("success") is True)
+    created_cust_id = res_cust.get("customer", {}).get("id")
+
+    # 15. Fetch Customers List
+    code, res_cust_list = make_request("/api/customers", method="GET", token=admin_token)
+    has_ramesh = any(c.get("mobile") == "9876543210" for c in res_cust_list.get("customers", []))
+    test("GET /api/customers (List Customers)", 200, code, has_ramesh)
+
+    # 16. Fetch Customer by ID
+    if created_cust_id:
+        code, res_single_cust = make_request(f"/api/customers/{created_cust_id}", method="GET", token=admin_token)
+        test("GET /api/customers/:id (Customer Profile)", 200, code, res_single_cust.get("success") is True)
+
+    # 17. POS Sale Checkout & Invoice Creation
+    sale_data = {
+        "customerId": created_cust_id,
+        "customerName": "Ramesh Patil",
+        "customerMobile": "9876543210",
+        "doctorName": "Dr. Joshi",
+        "paymentMode": "CASH",
+        "items": [
+            {
+                "medicineName": "Dolo 650 Tablet",
+                "batchNumber": "DL-2026-99",
+                "expiryDate": "2027-12-31",
+                "quantity": 2,
+                "mrp": 33.60,
+                "sellingPrice": 30.00,
+                "discountPercent": 0,
+                "gstRate": 12.0,
+                "total": 60.00
+            }
+        ],
+        "subtotal": 60.00,
+        "discountAmount": 0,
+        "gstAmount": 7.20,
+        "netTotal": 60.00
+    }
+    code, res_sale = make_request("/api/sales", method="POST", data=sale_data, token=admin_token)
+    test("POST /api/sales (Complete POS Sale & Invoice)", 201, code, res_sale.get("success") is True)
+    created_invoice_id = res_sale.get("invoice", {}).get("id")
+
+    # 18. Fetch Sales History & Analytics
+    code, res_sales_list = make_request("/api/sales", method="GET", token=admin_token)
+    has_invoice = any(s.get("id") == created_invoice_id for s in res_sales_list.get("invoices", []))
+    test("GET /api/sales (List Invoices & Stats)", 200, code, has_invoice and "stats" in res_sales_list)
+
+    # 19. Fetch Single Invoice Details
+    if created_invoice_id:
+        code, res_single_inv = make_request(f"/api/sales/{created_invoice_id}", method="GET", token=admin_token)
+        test("GET /api/sales/:id (Invoice Details & Items)", 200, code, len(res_single_inv.get("invoice", {}).get("items", [])) > 0)
+
+    # 20. Verify Customer Stats in DB after Sale
+    if created_cust_id:
+        code, res_cust_after = make_request(f"/api/customers/{created_cust_id}", method="GET", token=admin_token)
+        cust_info = res_cust_after.get("customer", {})
+        test("VERIFY: Customer lifetime spend & bills updated", 200, code, cust_info.get("totalBills", 0) >= 1)
+
+    # 21. Forgot Password Flow
     forgot_data = {
         "mobile": "8380036778",
         "new_password": "password123"
@@ -134,7 +199,7 @@ def run_tests():
     code, res = make_request("/api/auth/forgot-password", method="POST", data=forgot_data)
     test("POST /api/auth/forgot-password (Mobile password reset)", 200, code, res.get("success") is True)
 
-    # 15. Logout
+    # 22. Logout
     code, res = make_request("/api/auth/logout", method="POST", data={})
     test("POST /api/auth/logout", 200, code, res.get("success") is True)
 

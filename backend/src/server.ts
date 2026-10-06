@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import { pool } from "./db";
 import { authRouter } from "./routes/auth.routes";
 import { medicineRouter } from "./routes/medicine.routes";
+import { customerRouter } from "./routes/customer.routes";
+import { saleRouter } from "./routes/sale.routes";
 
 dotenv.config();
 
@@ -48,6 +50,12 @@ app.use("/api/auth", authRouter);
 
 // Medicine Catalog & Search Routes
 app.use("/api/medicines", medicineRouter);
+
+// Customer Directory Routes
+app.use("/api/customers", customerRouter);
+
+// Sales & POS Invoicing Routes
+app.use("/api/sales", saleRouter);
 
 // Start server
 app.listen(PORT, () => {

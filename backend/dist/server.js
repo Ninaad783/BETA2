@@ -9,6 +9,8 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const db_1 = require("./db");
 const auth_routes_1 = require("./routes/auth.routes");
 const medicine_routes_1 = require("./routes/medicine.routes");
+const customer_routes_1 = require("./routes/customer.routes");
+const sale_routes_1 = require("./routes/sale.routes");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5000;
@@ -47,6 +49,10 @@ app.get("/api/db/health", async (_req, res) => {
 app.use("/api/auth", auth_routes_1.authRouter);
 // Medicine Catalog & Search Routes
 app.use("/api/medicines", medicine_routes_1.medicineRouter);
+// Customer Directory Routes
+app.use("/api/customers", customer_routes_1.customerRouter);
+// Sales & POS Invoicing Routes
+app.use("/api/sales", sale_routes_1.saleRouter);
 // Start server
 app.listen(PORT, () => {
     console.log(`MedEasy Pharmacy OS backend running on http://localhost:${PORT}`);
