@@ -260,3 +260,270 @@ export const inwardFromMaster = async (req: Request, res: Response): Promise<voi
     client.release();
   }
 };
+
+const getStoreId = async (req: Request): Promise<string> => {
+  if ((req as any).user?.storeId) return (req as any).user.storeId;
+  const res = await pool.query('SELECT id FROM pharmacy_stores LIMIT 1;');
+  return res.rows[0]?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+};
+
+const isUuid = (val: any): boolean =>
+  typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
+/**
+ * Controller: Get All Store Inventory Medicines with Batches
+ * GET /api/medicines
+ */
+export const getStoreMedicines = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const storeId = await getStoreId(req);
+
+    const sql = `
+      SELECT 
+        m.id,
+        m.name,
+        m.generic_name AS "genericName",
+        COALESCE(c.name, 'Allopathy') AS category,
+        m.unit,
+        m.min_stock_alert AS "minStockAlert",
+        m.gst_rate::float AS "gstRate",
+        m.hsn_code AS "hsnCode",
+        m.manufacturer,
+        m.rack_location AS "rackLocation",
+        m.requires_prescription AS "requiresPrescription",
+        COALESCE(SUM(b.current_stock), 0)::int AS "totalStock",
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'id', b.id,
+              'medicineId', b.medicine_id,
+              'batchNumber', b.batch_number,
+              'barcode', b.barcode,
+              'expiryDate', TO_CHAR(b.expiry_date, 'YYYY-MM-DD'),
+              'purchasePrice', b.purchase_price::float,
+              'mrp', b.mrp::float,
+              'sellingPrice', b.selling_price::float,
+              'currentStock', b.current_stock,
+              'initialStock', b.initial_stock,
+              'isServing', b.is_serving
+            ) ORDER BY b.expiry_date ASC
+          ) FILTER (WHERE b.id IS NOT NULL),
+          '[]'::json
+        ) AS batches
+      FROM medicines m
+      LEFT JOIN medicine_categories c ON m.category_id = c.id
+      LEFT JOIN medicine_batches b ON m.id = b.medicine_id
+      WHERE m.store_id = $1
+      GROUP BY m.id, c.name
+      ORDER BY m.name ASC;
+    `;
+
+    const result = await pool.query(sql, [storeId]);
+
+    const formattedMedicines = result.rows.map((row: any) => {
+      const totalStock = row.totalStock;
+      const minAlert = row.minStockAlert;
+      const status = totalStock === 0 ? 'OUT_OF_STOCK' : (totalStock <= minAlert ? 'LOW_STOCK' : 'IN_STOCK');
+      const firstBatch = row.batches && row.batches.length > 0 ? row.batches[0] : null;
+      const mrp = firstBatch ? firstBatch.mrp : 50;
+      const sellingPrice = firstBatch ? firstBatch.sellingPrice : 45;
+
+      return {
+        id: row.id,
+        name: row.name,
+        genericName: row.genericName,
+        category: row.category,
+        unit: row.unit,
+        minStockAlert: row.minStockAlert,
+        totalStock,
+        status,
+        gstRate: row.gstRate,
+        sellingPrice,
+        mrp,
+        hsnCode: row.hsnCode,
+        manufacturer: row.manufacturer,
+        rackLocation: row.rackLocation,
+        requiresPrescription: row.requiresPrescription,
+        batches: row.batches || []
+      };
+    });
+
+    res.json({
+      success: true,
+      count: formattedMedicines.length,
+      medicines: formattedMedicines
+    });
+  } catch (error: any) {
+    console.error('Error getting store medicines:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve store medicines',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Controller: Create Store Medicine & Initial Batch
+ * POST /api/medicines
+ */
+export const createStoreMedicine = async (req: Request, res: Response): Promise<void> => {
+  const client = await pool.connect();
+  try {
+    const storeId = await getStoreId(req);
+    const {
+      name,
+      genericName,
+      category = 'Allopathy',
+      unit = 'strip',
+      minStockAlert = 15,
+      gstRate = 12,
+      sellingPrice = 40,
+      mrp = 50,
+      hsnCode = '300490',
+      manufacturer = '',
+      rackLocation = 'A-01',
+      requiresPrescription = false,
+      batch
+    } = req.body;
+
+    if (!name) {
+      res.status(400).json({ success: false, message: 'Medicine name is required' });
+      return;
+    }
+
+    await client.query('BEGIN');
+
+    const medRes = await client.query(
+      `INSERT INTO medicines (
+        store_id, name, generic_name, unit, min_stock_alert, 
+        gst_rate, hsn_code, manufacturer, rack_location, requires_prescription
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING *;`,
+      [
+        storeId,
+        name.trim(),
+        genericName || name.trim(),
+        unit,
+        parseInt(minStockAlert, 10) || 15,
+        Number(gstRate || 12),
+        hsnCode,
+        manufacturer,
+        rackLocation,
+        !!requiresPrescription
+      ]
+    );
+
+    const createdMed = medRes.rows[0];
+
+    let createdBatch = null;
+    if (batch && batch.batchNumber) {
+      const bRes = await client.query(
+        `INSERT INTO medicine_batches (
+          medicine_id, batch_number, expiry_date, purchase_price, mrp, selling_price, current_stock, initial_stock, is_serving
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $7, true)
+        RETURNING *;`,
+        [
+          createdMed.id,
+          batch.batchNumber.trim(),
+          batch.expiryDate || new Date(Date.now() + 365*24*3600*1000).toISOString().slice(0, 10),
+          Number(batch.purchasePrice || (mrp * 0.7)),
+          Number(batch.mrp || mrp),
+          Number(batch.sellingPrice || sellingPrice),
+          parseInt(batch.currentStock || batch.quantity, 10) || 10
+        ]
+      );
+      createdBatch = bRes.rows[0];
+    }
+
+    await client.query('COMMIT');
+
+    res.status(201).json({
+      success: true,
+      message: 'Medicine added to inventory successfully',
+      medicine: {
+        id: createdMed.id,
+        name: createdMed.name,
+        genericName: createdMed.generic_name,
+        category: category || 'Allopathy',
+        unit: createdMed.unit,
+        minStockAlert: createdMed.min_stock_alert,
+        totalStock: createdBatch ? createdBatch.current_stock : 0,
+        status: createdBatch && createdBatch.current_stock > 0 ? (createdBatch.current_stock <= createdMed.min_stock_alert ? 'LOW_STOCK' : 'IN_STOCK') : 'OUT_OF_STOCK',
+        gstRate: Number(createdMed.gst_rate),
+        mrp: createdBatch ? Number(createdBatch.mrp) : mrp,
+        sellingPrice: createdBatch ? Number(createdBatch.selling_price) : sellingPrice,
+        hsnCode: createdMed.hsn_code,
+        manufacturer: createdMed.manufacturer,
+        rackLocation: createdMed.rack_location,
+        requiresPrescription: createdMed.requires_prescription,
+        batches: createdBatch ? [{
+          id: createdBatch.id,
+          medicineId: createdMed.id,
+          batchNumber: createdBatch.batch_number,
+          expiryDate: createdBatch.expiry_date,
+          purchasePrice: Number(createdBatch.purchase_price),
+          mrp: Number(createdBatch.mrp),
+          sellingPrice: Number(createdBatch.selling_price),
+          currentStock: createdBatch.current_stock,
+          isServing: true
+        }] : []
+      }
+    });
+  } catch (err: any) {
+    await client.query('ROLLBACK');
+    console.error('Error adding store medicine:', err);
+    res.status(500).json({ success: false, message: 'Failed to add medicine', error: err.message });
+  } finally {
+    client.release();
+  }
+};
+
+/**
+ * Controller: Update Store Medicine Info
+ * PUT /api/medicines/:id
+ */
+export const updateStoreMedicine = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const storeId = await getStoreId(req);
+    const { id } = req.params;
+    const {
+      name, genericName, unit, minStockAlert, gstRate, hsnCode, manufacturer, rackLocation, requiresPrescription
+    } = req.body;
+
+    if (!isUuid(id)) {
+      res.status(404).json({ success: false, message: 'Medicine not found' });
+      return;
+    }
+
+    const result = await pool.query(
+      `UPDATE medicines
+       SET 
+         name = COALESCE($1, name),
+         generic_name = COALESCE($2, generic_name),
+         unit = COALESCE($3, unit),
+         min_stock_alert = COALESCE($4, min_stock_alert),
+         gst_rate = COALESCE($5, gst_rate),
+         hsn_code = COALESCE($6, hsn_code),
+         manufacturer = COALESCE($7, manufacturer),
+         rack_location = COALESCE($8, rack_location),
+         requires_prescription = COALESCE($9, requires_prescription),
+         updated_at = NOW()
+       WHERE id = $10 AND store_id = $11
+       RETURNING *;`,
+      [
+        name, genericName, unit, minStockAlert, gstRate, hsnCode, manufacturer, rackLocation, requiresPrescription, id, storeId
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ success: false, message: 'Medicine not found' });
+      return;
+    }
+
+    res.json({ success: true, message: 'Medicine updated successfully', medicine: result.rows[0] });
+  } catch (err: any) {
+    console.error('Error updating medicine:', err);
+    res.status(500).json({ success: false, message: 'Failed to update medicine', error: err.message });
+  }
+};

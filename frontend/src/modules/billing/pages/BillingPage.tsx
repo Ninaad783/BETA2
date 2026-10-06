@@ -464,7 +464,8 @@ export const BillingPage: React.FC = () => {
 
           {/* Cart Table */}
           <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
-            <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-left text-xs">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
                 <tr>
                   <th className="p-3">#</th>
@@ -553,6 +554,7 @@ export const BillingPage: React.FC = () => {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
 

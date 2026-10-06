@@ -8,6 +8,9 @@ const getStoreId = async (req: AuthenticatedRequest): Promise<string> => {
   return res.rows[0]?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 };
 
+const isUuid = (val: any): boolean =>
+  typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
 /**
  * POST /api/purchases
  * Inward distributor purchase invoice & update stock batches in PostgreSQL
@@ -16,7 +19,7 @@ export const createPurchaseInvoice = async (req: AuthenticatedRequest, res: Resp
   const client = await pool.connect();
   try {
     const storeId = await getStoreId(req);
-    const userId = req.user?.userId || null;
+    const userId = (req.user?.userId && isUuid(req.user.userId)) ? req.user.userId : null;
 
     const {
       supplierId,
@@ -51,7 +54,7 @@ export const createPurchaseInvoice = async (req: AuthenticatedRequest, res: Resp
     await client.query('BEGIN');
 
     // 1. Resolve Supplier
-    let finalSupplierId = supplierId || null;
+    let finalSupplierId: string | null = (supplierId && isUuid(supplierId)) ? supplierId : null;
     if (!finalSupplierId) {
       const supRes = await client.query(
         `SELECT id FROM suppliers WHERE store_id = $1 AND name ILIKE $2 LIMIT 1;`,
@@ -130,7 +133,7 @@ export const createPurchaseInvoice = async (req: AuthenticatedRequest, res: Resp
       const lineTotal = Number(it.total || (pPrice * qty));
 
       // 4a. Find or create medicine
-      let medicineId = it.medicineId || null;
+      let medicineId = (it.medicineId && isUuid(it.medicineId)) ? it.medicineId : null;
       if (!medicineId) {
         const medSearch = await client.query(
           `SELECT id FROM medicines WHERE store_id = $1 AND name ILIKE $2 LIMIT 1;`,

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { 
   CartItem, 
   Customer, 
@@ -28,6 +29,8 @@ interface PharmacyState {
   stockFilterTab: 'all' | 'low' | 'expiry';
   searchQuery: string;
   stockAdjustments: StockAdjustment[];
+  fetchMedicines: () => Promise<void>;
+  isLoadingMedicines: boolean;
 
   // POS / Cart
   cart: CartItem[];
@@ -91,9 +94,12 @@ interface PharmacyState {
   fetchPurchases: () => Promise<void>;
 }
 
-export const usePharmacyStore = create<PharmacyState>((set, get) => ({
-  medicines: INITIAL_MEDICINES,
-  selectedMedicineId: null,
+export const usePharmacyStore = create<PharmacyState>()(
+  persist(
+    (set, get) => ({
+      medicines: INITIAL_MEDICINES,
+      isLoadingMedicines: false,
+      selectedMedicineId: null,
   stockFilterTab: 'all',
   searchQuery: '',
   stockAdjustments: INITIAL_STOCK_ADJUSTMENTS,
@@ -378,6 +384,42 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
     return { success: true, invoiceNumber, total };
   },
 
+  fetchMedicines: async () => {
+    set({ isLoadingMedicines: true });
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/medicines`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.medicines && data.medicines.length > 0) {
+          set((state) => {
+            const dbMap = new Map(data.medicines.map((m: Medicine) => [m.id, m]));
+            const dbNameMap = new Map(data.medicines.map((m: Medicine) => [m.name.toLowerCase(), m]));
+            
+            const merged = [...data.medicines];
+            state.medicines.forEach((localMed) => {
+              if (!dbMap.has(localMed.id) && !dbNameMap.has(localMed.name.toLowerCase())) {
+                merged.push(localMed);
+              }
+            });
+
+            return {
+              medicines: merged,
+              stats: {
+                ...state.stats,
+                totalMedicinesCount: merged.length,
+                lowStockCount: merged.filter((m) => m.status === 'LOW_STOCK' || m.status === 'OUT_OF_STOCK').length
+              }
+            };
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch medicines from DB:', e);
+    } finally {
+      set({ isLoadingMedicines: false });
+    }
+  },
+
   addMedicine: (medicineData, initialBatchData) => {
     const medId = `med-${Date.now()}`;
     const batchId = `batch-${Date.now()}`;
@@ -409,6 +451,48 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
         totalMedicinesCount: state.stats.totalMedicinesCount + 1
       }
     }));
+
+    // Async persist to PostgreSQL backend
+    try {
+      const payload = {
+        name: medicineData.name,
+        genericName: medicineData.genericName,
+        category: medicineData.category,
+        unit: medicineData.unit,
+        minStockAlert: medicineData.minStockAlert,
+        gstRate: medicineData.gstRate,
+        sellingPrice: initialBatchData.sellingPrice,
+        mrp: initialBatchData.mrp,
+        hsnCode: medicineData.hsnCode,
+        manufacturer: medicineData.manufacturer,
+        requiresPrescription: medicineData.requiresPrescription,
+        batch: {
+          batchNumber: initialBatchData.batchNumber,
+          expiryDate: initialBatchData.expiryDate,
+          purchasePrice: initialBatchData.purchasePrice,
+          mrp: initialBatchData.mrp,
+          sellingPrice: initialBatchData.sellingPrice,
+          currentStock: initialBatchData.currentStock
+        }
+      };
+
+      fetch(`${API_BASE_URL}/api/medicines`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          if (data.medicine) {
+            set((state) => ({
+              medicines: state.medicines.map((m) => m.id === medId ? data.medicine : m)
+            }));
+          }
+        }
+      }).catch((err) => console.error('Failed to sync new medicine to backend:', err));
+    } catch (e) {
+      console.error('Error dispatching medicine sync:', e);
+    }
   },
 
   updateMedicine: (id, updates) => {
@@ -433,6 +517,17 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
         }
       };
     });
+
+    // Async sync to PostgreSQL if valid UUID
+    try {
+      fetch(`${API_BASE_URL}/api/medicines/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      }).catch((e) => console.error('Failed to sync medicine update to DB:', e));
+    } catch (e) {
+      console.error('Error dispatching updateMedicine:', e);
+    }
   },
 
   adjustBatchStock: (medicineId, batchNumber, newStock, reason) => {
@@ -798,11 +893,27 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
       console.error('Failed to fetch purchases from DB:', e);
     }
   }
-}));
+    }),
+    {
+      name: 'medeasy_pharmacy_store_data',
+      partialize: (state) => ({
+        medicines: state.medicines,
+        customers: state.customers,
+        suppliers: state.suppliers,
+        purchases: state.purchases,
+        salesInvoices: state.salesInvoices,
+        stats: state.stats,
+        invoiceCounter: state.invoiceCounter,
+        stockAdjustments: state.stockAdjustments,
+      }),
+    }
+  )
+);
 
-// Auto-load customers, sales, suppliers, and purchases from backend when app boots
+// Auto-load medicines, customers, sales, suppliers, and purchases from backend when app boots
 if (typeof window !== 'undefined') {
   setTimeout(() => {
+    usePharmacyStore.getState().fetchMedicines();
     usePharmacyStore.getState().fetchCustomers();
     usePharmacyStore.getState().fetchSales();
     usePharmacyStore.getState().fetchSuppliers();

@@ -8,6 +8,7 @@ const getStoreId = async (req) => {
     const res = await db_1.pool.query('SELECT id FROM pharmacy_stores LIMIT 1;');
     return res.rows[0]?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 };
+const isUuid = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 /**
  * POST /api/sales
  * Create a new Sales Tax Invoice with FEFO Batch deduction & Customer history
@@ -16,7 +17,7 @@ const createSaleInvoice = async (req, res) => {
     const client = await db_1.pool.connect();
     try {
         const storeId = await getStoreId(req);
-        const userId = req.user?.userId || null;
+        const userId = (req.user?.userId && isUuid(req.user.userId)) ? req.user.userId : null;
         const { customerId, customerName, customerMobile, doctorName, patientName, paymentMode = 'CASH', notes, items, subtotal, discountAmount = 0, gstAmount = 0, netTotal } = req.body;
         if (!items || !Array.isArray(items) || items.length === 0) {
             res.status(400).json({
@@ -27,7 +28,7 @@ const createSaleInvoice = async (req, res) => {
         }
         await client.query('BEGIN');
         // 1. Resolve Customer ID
-        let finalCustomerId = customerId || null;
+        let finalCustomerId = (customerId && isUuid(customerId)) ? customerId : null;
         let customerNameSnapshot = customerName || patientName || 'Walk-in Customer';
         let customerMobileSnapshot = customerMobile || null;
         if (!finalCustomerId && customerMobile && customerMobile.trim().length >= 10) {
@@ -110,14 +111,16 @@ const createSaleInvoice = async (req, res) => {
             const lineTotal = Number(item.total || (sellPrice * qty));
             const lineTaxable = Number((lineTotal / (1 + gstRate / 100)).toFixed(2));
             const lineGst = Number((lineTotal - lineTaxable).toFixed(2));
+            const finalMedId = isUuid(item.medicineId) ? item.medicineId : (isUuid(item.id) ? item.id : null);
+            const finalBatchId = isUuid(item.batchId) ? item.batchId : null;
             await client.query(`INSERT INTO sales_invoice_items (
           invoice_id, medicine_id, batch_id, medicine_name, batch_number, expiry_date,
           quantity, purchase_price, mrp, selling_price, discount_percent, gst_rate,
           taxable_amount, gst_amount, total_amount
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);`, [
                 createdInvoice.id,
-                item.medicineId || item.id || null,
-                item.batchId || null,
+                finalMedId,
+                finalBatchId,
                 medName,
                 batchNo,
                 expDate,
@@ -131,11 +134,16 @@ const createSaleInvoice = async (req, res) => {
                 lineGst,
                 lineTotal
             ]);
-            // Decrement batch stock if batch_id provided
-            if (item.batchId) {
+            // Decrement batch stock if valid batch_id provided or find by batch_number
+            if (finalBatchId) {
                 await client.query(`UPDATE medicine_batches 
            SET current_stock = GREATEST(0, current_stock - $1), updated_at = NOW()
-           WHERE id = $2;`, [qty, item.batchId]);
+           WHERE id = $2;`, [qty, finalBatchId]);
+            }
+            else if (batchNo && batchNo !== 'DEFAULT') {
+                await client.query(`UPDATE medicine_batches 
+           SET current_stock = GREATEST(0, current_stock - $1), updated_at = NOW()
+           WHERE batch_number = $2;`, [qty, batchNo]);
             }
         }
         // 6. Update customer spend & count if customer linked

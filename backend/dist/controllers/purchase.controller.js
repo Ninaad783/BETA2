@@ -8,6 +8,7 @@ const getStoreId = async (req) => {
     const res = await db_1.pool.query('SELECT id FROM pharmacy_stores LIMIT 1;');
     return res.rows[0]?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 };
+const isUuid = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 /**
  * POST /api/purchases
  * Inward distributor purchase invoice & update stock batches in PostgreSQL
@@ -16,7 +17,7 @@ const createPurchaseInvoice = async (req, res) => {
     const client = await db_1.pool.connect();
     try {
         const storeId = await getStoreId(req);
-        const userId = req.user?.userId || null;
+        const userId = (req.user?.userId && isUuid(req.user.userId)) ? req.user.userId : null;
         const { supplierId, supplierName, supplierInvoiceNumber, purchaseDate = new Date().toISOString().slice(0, 10), paymentMode = 'BANK_TRANSFER', items, subtotal, discountAmount = 0, gstAmount = 0, netTotal, notes } = req.body;
         if (!supplierName || !supplierInvoiceNumber) {
             res.status(400).json({
@@ -34,7 +35,7 @@ const createPurchaseInvoice = async (req, res) => {
         }
         await client.query('BEGIN');
         // 1. Resolve Supplier
-        let finalSupplierId = supplierId || null;
+        let finalSupplierId = (supplierId && isUuid(supplierId)) ? supplierId : null;
         if (!finalSupplierId) {
             const supRes = await client.query(`SELECT id FROM suppliers WHERE store_id = $1 AND name ILIKE $2 LIMIT 1;`, [storeId, supplierName.trim()]);
             if (supRes.rows.length > 0) {
@@ -99,7 +100,7 @@ const createPurchaseInvoice = async (req, res) => {
             const gstRate = Number(it.gstRate || 12.0);
             const lineTotal = Number(it.total || (pPrice * qty));
             // 4a. Find or create medicine
-            let medicineId = it.medicineId || null;
+            let medicineId = (it.medicineId && isUuid(it.medicineId)) ? it.medicineId : null;
             if (!medicineId) {
                 const medSearch = await client.query(`SELECT id FROM medicines WHERE store_id = $1 AND name ILIKE $2 LIMIT 1;`, [storeId, medName]);
                 if (medSearch.rows.length > 0) {

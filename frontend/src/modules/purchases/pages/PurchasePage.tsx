@@ -433,58 +433,60 @@ export const PurchasePage: React.FC = () => {
             </span>
           </div>
 
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
-              <tr>
-                <th className="p-3">#</th>
-                <th className="p-3">Invoice Number</th>
-                <th className="p-3">Distributor Agency</th>
-                <th className="p-3">Purchase Date</th>
-                <th className="p-3 text-center">Lines</th>
-                <th className="p-3 text-center">Total Units</th>
-                <th className="p-3">Payment Mode</th>
-                <th className="p-3 text-center">Status</th>
-                <th className="p-3 text-right">Net Amount</th>
-                <th className="p-3 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {filteredPurchases.map((pur, idx) => (
-                <tr key={pur.id} className="hover:bg-slate-50/60 transition">
-                  <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
-                  <td className="p-3 font-mono font-bold text-slate-900">{pur.supplierInvoiceNumber}</td>
-                  <td className="p-3 font-semibold text-sky-700">{pur.supplierName}</td>
-                  <td className="p-3 text-slate-600">{pur.purchaseDate}</td>
-                  <td className="p-3 text-center font-medium">{pur.lineCount || pur.items.length}</td>
-                  <td className="p-3 text-center font-bold text-slate-800">
-                    {pur.totalUnits || pur.items.reduce((s, i) => s + i.quantity, 0)}
-                  </td>
-                  <td className="p-3">
-                    <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-semibold">
-                      {pur.paymentMode}
-                    </span>
-                  </td>
-                  <td className="p-3 text-center">
-                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
-                      {pur.status}
-                    </span>
-                  </td>
-                  <td className="p-3 text-right font-black text-slate-900 font-mono text-xs">
-                    ₹{pur.netTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                  </td>
-                  <td className="p-3 text-center">
-                    <button
-                      onClick={() => setViewingPurchase(pur)}
-                      className="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100 rounded-lg font-semibold text-[11px] transition flex items-center gap-1 mx-auto cursor-pointer"
-                    >
-                      <Eye className="w-3 h-3" />
-                      <span>View Items</span>
-                    </button>
-                  </td>
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left text-xs min-w-[720px]">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
+                <tr>
+                  <th className="p-3">#</th>
+                  <th className="p-3">Invoice Number</th>
+                  <th className="p-3">Distributor Agency</th>
+                  <th className="p-3">Purchase Date</th>
+                  <th className="p-3 text-center">Lines</th>
+                  <th className="p-3 text-center">Total Units</th>
+                  <th className="p-3">Payment Mode</th>
+                  <th className="p-3 text-center">Status</th>
+                  <th className="p-3 text-right">Net Amount</th>
+                  <th className="p-3 text-center">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {filteredPurchases.map((pur, idx) => (
+                  <tr key={pur.id} className="hover:bg-slate-50/60 transition">
+                    <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
+                    <td className="p-3 font-mono font-bold text-slate-900">{pur.supplierInvoiceNumber}</td>
+                    <td className="p-3 font-semibold text-sky-700">{pur.supplierName}</td>
+                    <td className="p-3 text-slate-600">{pur.purchaseDate}</td>
+                    <td className="p-3 text-center font-medium">{pur.lineCount || pur.items.length}</td>
+                    <td className="p-3 text-center font-bold text-slate-800">
+                      {pur.totalUnits || pur.items.reduce((s, i) => s + i.quantity, 0)}
+                    </td>
+                    <td className="p-3">
+                      <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-semibold">
+                        {pur.paymentMode}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
+                        {pur.status}
+                      </span>
+                    </td>
+                    <td className="p-3 text-right font-black text-slate-900 font-mono text-xs">
+                      ₹{pur.netTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="p-3 text-center">
+                      <button
+                        onClick={() => setViewingPurchase(pur)}
+                        className="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100 rounded-lg font-semibold text-[11px] transition flex items-center gap-1 mx-auto cursor-pointer"
+                      >
+                        <Eye className="w-3 h-3" />
+                        <span>View Items</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -515,36 +517,38 @@ export const PurchasePage: React.FC = () => {
               </div>
             </div>
 
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100 text-slate-600 uppercase font-semibold">
-                <tr>
-                  <th className="p-2.5">#</th>
-                  <th className="p-2.5">Medicine</th>
-                  <th className="p-2.5">Batch</th>
-                  <th className="p-2.5">Expiry</th>
-                  <th className="p-2.5 text-right">Cost</th>
-                  <th className="p-2.5 text-right">MRP</th>
-                  <th className="p-2.5 text-center">Qty</th>
-                  <th className="p-2.5 text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {viewingPurchase.items.map((it, idx) => (
-                  <tr key={it.id || idx}>
-                    <td className="p-2.5 font-mono text-slate-400">{idx + 1}</td>
-                    <td className="p-2.5 font-bold text-slate-900">{it.medicineName}</td>
-                    <td className="p-2.5 font-mono">{it.batchNumber}</td>
-                    <td className="p-2.5 text-slate-600">{it.expiryDate}</td>
-                    <td className="p-2.5 text-right font-mono">₹{it.purchasePrice.toFixed(2)}</td>
-                    <td className="p-2.5 text-right font-mono">₹{it.mrp.toFixed(2)}</td>
-                    <td className="p-2.5 text-center font-bold">{it.quantity}</td>
-                    <td className="p-2.5 text-right font-mono font-bold text-slate-900">
-                      ₹{it.totalAmount.toFixed(2)}
-                    </td>
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left text-xs min-w-[550px]">
+                <thead className="bg-slate-100 text-slate-600 uppercase font-semibold">
+                  <tr>
+                    <th className="p-2.5">#</th>
+                    <th className="p-2.5">Medicine</th>
+                    <th className="p-2.5">Batch</th>
+                    <th className="p-2.5">Expiry</th>
+                    <th className="p-2.5 text-right">Cost</th>
+                    <th className="p-2.5 text-right">MRP</th>
+                    <th className="p-2.5 text-center">Qty</th>
+                    <th className="p-2.5 text-right">Total</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {viewingPurchase.items.map((it, idx) => (
+                    <tr key={it.id || idx}>
+                      <td className="p-2.5 font-mono text-slate-400">{idx + 1}</td>
+                      <td className="p-2.5 font-bold text-slate-900">{it.medicineName}</td>
+                      <td className="p-2.5 font-mono">{it.batchNumber}</td>
+                      <td className="p-2.5 text-slate-600">{it.expiryDate}</td>
+                      <td className="p-2.5 text-right font-mono">₹{it.purchasePrice.toFixed(2)}</td>
+                      <td className="p-2.5 text-right font-mono">₹{it.mrp.toFixed(2)}</td>
+                      <td className="p-2.5 text-center font-bold">{it.quantity}</td>
+                      <td className="p-2.5 text-right font-mono font-bold text-slate-900">
+                        ₹{it.totalAmount.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <div className="flex justify-end pt-2 border-t border-slate-100">
               <button

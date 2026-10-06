@@ -181,72 +181,74 @@ export const SuppliersPage: React.FC = () => {
 
       {/* Suppliers Table */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
-            <tr>
-              <th className="p-3">#</th>
-              <th className="p-3">{isMr ? 'सप्लायर / कंपनी' : 'Distributor / Agency'}</th>
-              <th className="p-3">{isMr ? 'संपर्क व्यक्ती व फोन' : 'Contact & Mobile'}</th>
-              <th className="p-3">{isMr ? 'जीएसटी व ड्रग्ज लायसन्स' : 'GSTIN & DL Number'}</th>
-              <th className="p-3">{isMr ? 'पत्ता / शहर' : 'City / Warehouse'}</th>
-              <th className="p-3 text-center">{isMr ? 'स्थिती' : 'Account Status'}</th>
-              <th className="p-3 text-center">{isMr ? 'कृती' : 'Action'}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-slate-700">
-            {filteredSuppliers.length > 0 ? (
-              filteredSuppliers.map((sup, idx) => (
-                <tr key={sup.id} className="hover:bg-slate-50/60 transition">
-                  <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
-                  <td className="p-3">
-                    <span className="font-bold text-slate-900 block text-xs">{sup.name}</span>
-                    {sup.email && (
-                      <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                        <Mail className="w-2.5 h-2.5" /> {sup.email}
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-xs min-w-[700px]">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
+              <tr>
+                <th className="p-3">#</th>
+                <th className="p-3">{isMr ? 'सप्लायर / कंपनी' : 'Distributor / Agency'}</th>
+                <th className="p-3">{isMr ? 'संपर्क व्यक्ती व फोन' : 'Contact & Mobile'}</th>
+                <th className="p-3">{isMr ? 'जीएसटी व ड्रग्ज लायसन्स' : 'GSTIN & DL Number'}</th>
+                <th className="p-3">{isMr ? 'पत्ता / शहर' : 'City / Warehouse'}</th>
+                <th className="p-3 text-center">{isMr ? 'स्थिती' : 'Account Status'}</th>
+                <th className="p-3 text-center">{isMr ? 'कृती' : 'Action'}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700">
+              {filteredSuppliers.length > 0 ? (
+                filteredSuppliers.map((sup, idx) => (
+                  <tr key={sup.id} className="hover:bg-slate-50/60 transition">
+                    <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
+                    <td className="p-3">
+                      <span className="font-bold text-slate-900 block text-xs">{sup.name}</span>
+                      {sup.email && (
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                          <Mail className="w-2.5 h-2.5" /> {sup.email}
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      <span className="font-medium text-slate-800 block">{sup.contactPerson || 'Office Sales'}</span>
+                      <span className="text-[11px] text-sky-600 flex items-center gap-1 font-mono">
+                        <Phone className="w-2.5 h-2.5" /> +91 {sup.mobile}
                       </span>
-                    )}
-                  </td>
-                  <td className="p-3">
-                    <span className="font-medium text-slate-800 block">{sup.contactPerson || 'Office Sales'}</span>
-                    <span className="text-[11px] text-sky-600 flex items-center gap-1 font-mono">
-                      <Phone className="w-2.5 h-2.5" /> +91 {sup.mobile}
-                    </span>
-                  </td>
-                  <td className="p-3 font-mono text-[11px]">
-                    <span className="text-slate-700 block font-semibold">{sup.gstin || '27AABCP1234A1Z5'}</span>
-                    <span className="text-slate-400 text-[10px]">DL: {sup.dlNumber || 'MH-DL-001'}</span>
-                  </td>
-                  <td className="p-3 text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                      <span className="truncate max-w-[180px]">{sup.address || 'Pune District'}</span>
-                    </span>
-                  </td>
-                  <td className="p-3 text-center">
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[10px]">
-                      Active Partner
-                    </span>
-                  </td>
-                  <td className="p-3 text-center">
-                    <button
-                      onClick={() => navigate('/purchases')}
-                      className="px-3 py-1 bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100 rounded-lg font-semibold text-[11px] transition flex items-center gap-1 mx-auto cursor-pointer"
-                    >
-                      <ShoppingBag className="w-3 h-3" />
-                      <span>{isMr ? 'खरेदी नोंद' : '+ Purchase Bill'}</span>
-                    </button>
+                    </td>
+                    <td className="p-3 font-mono text-[11px]">
+                      <span className="text-slate-700 block font-semibold">{sup.gstin || '27AABCP1234A1Z5'}</span>
+                      <span className="text-slate-400 text-[10px]">DL: {sup.dlNumber || 'MH-DL-001'}</span>
+                    </td>
+                    <td className="p-3 text-slate-500">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="truncate max-w-[180px]">{sup.address || 'Pune District'}</span>
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[10px]">
+                        Active Partner
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
+                      <button
+                        onClick={() => navigate('/purchases')}
+                        className="px-3 py-1 bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100 rounded-lg font-semibold text-[11px] transition flex items-center gap-1 mx-auto cursor-pointer"
+                      >
+                        <ShoppingBag className="w-3 h-3" />
+                        <span>{isMr ? 'खरेदी नोंद' : '+ Purchase Bill'}</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-slate-400 text-xs">
+                    {isMr ? 'कोणतेही सप्लायर आढळले नाहीत.' : 'No suppliers matching filter.'}
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={7} className="p-8 text-center text-slate-400 text-xs">
-                  {isMr ? 'कोणतेही सप्लायर आढळले नाहीत.' : 'No suppliers matching filter.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* MODAL: ADD SUPPLIER */}

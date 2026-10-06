@@ -8,6 +8,7 @@ const getStoreId = async (req) => {
     const res = await db_1.pool.query('SELECT id FROM pharmacy_stores LIMIT 1;');
     return res.rows[0]?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 };
+const isUuid = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 /**
  * GET /api/customers
  * Fetch all customers for current store
@@ -61,6 +62,10 @@ const getCustomerById = async (req, res) => {
     try {
         const storeId = await getStoreId(req);
         const { id } = req.params;
+        if (!isUuid(id)) {
+            res.status(404).json({ success: false, message: 'Customer not found' });
+            return;
+        }
         const customerRes = await db_1.pool.query(`SELECT 
         id, 
         full_name AS "fullName", 

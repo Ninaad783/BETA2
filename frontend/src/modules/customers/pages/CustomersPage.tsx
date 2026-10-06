@@ -163,85 +163,87 @@ export const CustomersPage: React.FC = () => {
           </span>
         </div>
 
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
-            <tr>
-              <th className="p-3">#</th>
-              <th className="p-3">{t('thCustomerName')}</th>
-              <th className="p-3">{t('thMobile')}</th>
-              <th className="p-3 text-right">{t('thTotalPurchase')}</th>
-              <th className="p-3 text-center">{t('thTotalBills')}</th>
-              <th className="p-3">{t('thLastPurchase')}</th>
-              <th className="p-3">{isMr ? 'पत्ता' : 'Location / Address'}</th>
-              <th className="p-3 text-center">{isMr ? 'कृती' : 'Action'}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-slate-700">
-            {filteredCustomers.length > 0 ? (
-              filteredCustomers.map((cust, idx) => (
-                <tr
-                  key={cust.id}
-                  onClick={() => navigate(`/customers/${cust.id}`)}
-                  className="hover:bg-sky-50/40 cursor-pointer transition"
-                >
-                  <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
-                  <td className="p-3">
-                    <span className="font-bold text-sky-700 hover:underline block text-xs">
-                      {cust.fullName}
-                    </span>
-                  </td>
-                  <td className="p-3 font-mono text-slate-600">
-                    <span className="flex items-center gap-1 font-medium">
-                      <Phone className="w-3 h-3 text-slate-400" />
-                      +91 {cust.mobile}
-                    </span>
-                  </td>
-                  <td className="p-3 text-right font-black text-slate-900 font-mono">
-                    ₹{cust.totalPurchases.toLocaleString('en-IN')}
-                  </td>
-                  <td className="p-3 text-center">
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">
-                      {cust.totalBills} {isMr ? 'बिले' : 'bills'}
-                    </span>
-                  </td>
-                  <td className="p-3 text-slate-500 font-medium">
-                    {cust.lastPurchaseDate}
-                  </td>
-                  <td className="p-3 text-slate-500">
-                    <span className="flex items-center gap-1 text-[11px] truncate max-w-[180px]">
-                      <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                      {cust.address || '—'}
-                    </span>
-                  </td>
-                  <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-center space-x-1.5">
-                      <button
-                        onClick={() => navigate(`/customers/${cust.id}`)}
-                        className="px-2.5 py-1 bg-slate-100 rounded-lg text-slate-700 font-semibold hover:bg-slate-200 transition cursor-pointer flex items-center gap-1 text-[11px]"
-                      >
-                        <History className="w-3 h-3 text-slate-500" />
-                        <span>{t('historyBtn')}</span>
-                      </button>
-                      <button
-                        onClick={(e) => handleStartBillForCustomer(cust.id, e)}
-                        className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-semibold hover:bg-emerald-100 transition cursor-pointer flex items-center gap-1 text-[11px]"
-                      >
-                        <ShoppingBag className="w-3 h-3 text-emerald-600" />
-                        <span>{isMr ? 'बिल' : 'New Bill'}</span>
-                      </button>
-                    </div>
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-xs min-w-[720px]">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
+              <tr>
+                <th className="p-3">#</th>
+                <th className="p-3">{t('thCustomerName')}</th>
+                <th className="p-3">{t('thMobile')}</th>
+                <th className="p-3 text-right">{t('thTotalPurchase')}</th>
+                <th className="p-3 text-center">{t('thTotalBills')}</th>
+                <th className="p-3">{t('thLastPurchase')}</th>
+                <th className="p-3">{isMr ? 'पत्ता' : 'Location / Address'}</th>
+                <th className="p-3 text-center">{isMr ? 'कृती' : 'Action'}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700">
+              {filteredCustomers.length > 0 ? (
+                filteredCustomers.map((cust, idx) => (
+                  <tr
+                    key={cust.id}
+                    onClick={() => navigate(`/customers/${cust.id}`)}
+                    className="hover:bg-sky-50/40 cursor-pointer transition"
+                  >
+                    <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
+                    <td className="p-3">
+                      <span className="font-bold text-sky-700 hover:underline block text-xs">
+                        {cust.fullName}
+                      </span>
+                    </td>
+                    <td className="p-3 font-mono text-slate-600">
+                      <span className="flex items-center gap-1 font-medium">
+                        <Phone className="w-3 h-3 text-slate-400" />
+                        +91 {cust.mobile}
+                      </span>
+                    </td>
+                    <td className="p-3 text-right font-black text-slate-900 font-mono">
+                      ₹{cust.totalPurchases.toLocaleString('en-IN')}
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">
+                        {cust.totalBills} {isMr ? 'बिले' : 'bills'}
+                      </span>
+                    </td>
+                    <td className="p-3 text-slate-500 font-medium">
+                      {cust.lastPurchaseDate}
+                    </td>
+                    <td className="p-3 text-slate-500">
+                      <span className="flex items-center gap-1 text-[11px] truncate max-w-[180px]">
+                        <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                        {cust.address || '—'}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-center space-x-1.5">
+                        <button
+                          onClick={() => navigate(`/customers/${cust.id}`)}
+                          className="px-2.5 py-1 bg-slate-100 rounded-lg text-slate-700 font-semibold hover:bg-slate-200 transition cursor-pointer flex items-center gap-1 text-[11px]"
+                        >
+                          <History className="w-3 h-3 text-slate-500" />
+                          <span>{t('historyBtn')}</span>
+                        </button>
+                        <button
+                          onClick={(e) => handleStartBillForCustomer(cust.id, e)}
+                          className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-semibold hover:bg-emerald-100 transition cursor-pointer flex items-center gap-1 text-[11px]"
+                        >
+                          <ShoppingBag className="w-3 h-3 text-emerald-600" />
+                          <span>{isMr ? 'बिल' : 'New Bill'}</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-slate-400">
+                    {isMr ? 'कोणतेही ग्राहक आढळले नाहीत.' : 'No customers matching search query.'}
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={8} className="p-8 text-center text-slate-400">
-                  {isMr ? 'कोणतेही ग्राहक आढळले नाहीत.' : 'No customers matching search query.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* MODAL: ADD CUSTOMER */}

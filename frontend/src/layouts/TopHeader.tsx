@@ -40,34 +40,34 @@ export const TopHeader: React.FC = () => {
   ).slice(0, 3);
 
   return (
-    <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-xs sticky top-0 z-40">
+    <header className="bg-white border-b border-slate-200 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between shadow-xs sticky top-0 z-40">
       {/* Left Area: Toggle Side Panel & Global Quick Search */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 mr-2">
         {/* Toggle Side Panel Button */}
         <button
           onClick={toggleSidebar}
-          className={`px-3 py-2 rounded-xl transition cursor-pointer flex items-center gap-2 text-xs font-bold shadow-xs ${
+          className={`p-2 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer flex items-center gap-2 text-xs font-bold shadow-xs shrink-0 ${
             !sidebarOpen
               ? 'bg-sky-600 hover:bg-sky-700 text-white shadow-sky-200'
               : 'text-slate-600 border border-slate-200 hover:bg-slate-100 hover:text-slate-900 bg-slate-50'
           }`}
-          title={sidebarOpen ? "Hide side panel" : "Show side panel"}
+          title={sidebarOpen ? "Hide menu" : "Open menu"}
         >
           {sidebarOpen ? (
             <>
               <PanelLeftClose className="w-4 h-4 text-slate-500" />
-              <span className="hidden sm:inline">Hide Menu</span>
+              <span className="hidden md:inline">Hide Menu</span>
             </>
           ) : (
             <>
               <PanelLeftOpen className="w-4 h-4 text-white" />
-              <span>Show Menu</span>
+              <span className="hidden md:inline">Menu</span>
             </>
           )}
         </button>
 
         {/* Global Quick Search with Live Dropdown */}
-        <div className="relative w-72 sm:w-88" ref={searchRef}>
+        <div className="relative flex-1 min-w-[130px] max-w-xs sm:max-w-sm" ref={searchRef}>
         <div className="relative w-full">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input

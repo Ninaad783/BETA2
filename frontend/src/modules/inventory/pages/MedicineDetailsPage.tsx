@@ -197,65 +197,67 @@ export const MedicineDetailsPage: React.FC = () => {
           </span>
         </div>
 
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
-            <tr>
-              <th className="p-3">#</th>
-              <th className="p-3">Batch No</th>
-              <th className="p-3">Expiry Date</th>
-              <th className="p-3 text-right">Purchase Cost</th>
-              <th className="p-3 text-right">MRP</th>
-              <th className="p-3 text-center">Remaining Stock</th>
-              <th className="p-3 text-center">Status</th>
-              <th className="p-3 text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-slate-700">
-            {sortedBatches.map((batch, idx) => {
-              const isFirstWithStock = idx === 0 && batch.currentStock > 0;
-              return (
-                <tr
-                  key={batch.id}
-                  className={isFirstWithStock ? 'bg-emerald-50/30' : 'hover:bg-slate-50/50'}
-                >
-                  <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
-                  <td className="p-3 font-mono font-bold text-slate-900">{batch.batchNumber}</td>
-                  <td className="p-3 font-semibold text-slate-700">
-                    {batch.expiryDate}{' '}
-                    {isFirstWithStock && <span className="text-emerald-700 text-[10px] font-bold">(Active)</span>}
-                  </td>
-                  <td className="p-3 text-right font-medium">₹{batch.purchasePrice.toFixed(2)}</td>
-                  <td className="p-3 text-right text-slate-500">₹{batch.mrp.toFixed(2)}</td>
-                  <td className="p-3 text-center font-bold text-slate-900">
-                    {batch.currentStock} {medicine.unit}s
-                  </td>
-                  <td className="p-3 text-center">
-                    {isFirstWithStock ? (
-                      <span className="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border border-emerald-200">
-                        {t('servingNow')}
-                      </span>
-                    ) : (
-                      <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[11px] font-medium">
-                        {t('queuedBatch')}
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3 text-center">
-                    <button
-                      onClick={() => {
-                        setAdjustingBatch(batch);
-                        setAdjustedQty(batch.currentStock);
-                      }}
-                      className="text-sky-600 hover:text-sky-800 font-semibold cursor-pointer hover:underline"
-                    >
-                      Adjust
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-xs min-w-[700px]">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
+              <tr>
+                <th className="p-3">#</th>
+                <th className="p-3">Batch No</th>
+                <th className="p-3">Expiry Date</th>
+                <th className="p-3 text-right">Purchase Cost</th>
+                <th className="p-3 text-right">MRP</th>
+                <th className="p-3 text-center">Remaining Stock</th>
+                <th className="p-3 text-center">Status</th>
+                <th className="p-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700">
+              {sortedBatches.map((batch, idx) => {
+                const isFirstWithStock = idx === 0 && batch.currentStock > 0;
+                return (
+                  <tr
+                    key={batch.id}
+                    className={isFirstWithStock ? 'bg-emerald-50/30' : 'hover:bg-slate-50/50'}
+                  >
+                    <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
+                    <td className="p-3 font-mono font-bold text-slate-900">{batch.batchNumber}</td>
+                    <td className="p-3 font-semibold text-slate-700">
+                      {batch.expiryDate}{' '}
+                      {isFirstWithStock && <span className="text-emerald-700 text-[10px] font-bold">(Active)</span>}
+                    </td>
+                    <td className="p-3 text-right font-medium">₹{batch.purchasePrice.toFixed(2)}</td>
+                    <td className="p-3 text-right text-slate-500">₹{batch.mrp.toFixed(2)}</td>
+                    <td className="p-3 text-center font-bold text-slate-900">
+                      {batch.currentStock} {medicine.unit}s
+                    </td>
+                    <td className="p-3 text-center">
+                      {isFirstWithStock ? (
+                        <span className="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border border-emerald-200">
+                          {t('servingNow')}
+                        </span>
+                      ) : (
+                        <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[11px] font-medium">
+                          {t('queuedBatch')}
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3 text-center">
+                      <button
+                        onClick={() => {
+                          setAdjustingBatch(batch);
+                          setAdjustedQty(batch.currentStock);
+                        }}
+                        className="text-sky-600 hover:text-sky-800 font-semibold cursor-pointer hover:underline"
+                      >
+                        Adjust
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* =========================================================
