@@ -191,7 +191,65 @@ def run_tests():
         cust_info = res_cust_after.get("customer", {})
         test("VERIFY: Customer lifetime spend & bills updated", 200, code, cust_info.get("totalBills", 0) >= 1)
 
-    # 21. Forgot Password Flow
+    # 21. Supplier Management Endpoints
+    supplier_data = {
+        "name": "Apollo Pharma Distributors",
+        "contactPerson": "Sachin Kulkarni",
+        "mobile": "9822001122",
+        "gstin": "27AABCA1234F1Z5",
+        "dlNumber": "MH-KOL-20B-9988",
+        "address": "Market Yard, Kolhapur"
+    }
+    code, res_sup = make_request("/api/suppliers", method="POST", data=supplier_data, token=admin_token)
+    test("POST /api/suppliers (Create Supplier)", 201, code, res_sup.get("success") is True)
+    created_sup_id = res_sup.get("supplier", {}).get("id")
+
+    # 22. Fetch Suppliers List
+    code, res_sup_list = make_request("/api/suppliers", method="GET", token=admin_token)
+    has_supplier = any(s.get("name") == "Apollo Pharma Distributors" for s in res_sup_list.get("suppliers", []))
+    test("GET /api/suppliers (List Suppliers)", 200, code, has_supplier)
+
+    # 23. Distributor Purchase Inward Entry
+    purchase_data = {
+        "supplierId": created_sup_id,
+        "supplierName": "Apollo Pharma Distributors",
+        "supplierInvoiceNumber": "DIST-INV-2026-887",
+        "purchaseDate": "2026-10-06",
+        "paymentMode": "BANK_TRANSFER",
+        "items": [
+            {
+                "medicineName": "Azithral 500 Tablet",
+                "genericName": "Azithromycin 500mg",
+                "batchNumber": "AZ-OCT26-01",
+                "expiryDate": "2028-09-30",
+                "quantity": 20,
+                "freeQuantity": 2,
+                "purchasePrice": 95.00,
+                "mrp": 132.00,
+                "sellingPrice": 125.00,
+                "gstRate": 12.0,
+                "total": 1900.00
+            }
+        ],
+        "subtotal": 1900.00,
+        "discountAmount": 0,
+        "gstAmount": 228.00,
+        "netTotal": 2128.00
+    }
+    code, res_pur = make_request("/api/purchases", method="POST", data=purchase_data, token=admin_token)
+    test("POST /api/purchases (Inward Distributor Invoice & Stock)", 201, code, res_pur.get("success") is True)
+
+    # 24. Fetch Purchase Invoices List
+    code, res_pur_list = make_request("/api/purchases", method="GET", token=admin_token)
+    has_purchase = any(p.get("invoiceNumber") == "DIST-INV-2026-887" for p in res_pur_list.get("purchases", []))
+    test("GET /api/purchases (List Purchase Invoices)", 200, code, has_purchase)
+
+    # 25. Verify Newly Inwarded Medicine & Batch Stock Appears in Inventory Search
+    code, res_med_search = make_request("/api/medicines/search?q=azithral&limit=5")
+    has_azithral_batch = any(m.get("batch_number") == "AZ-OCT26-01" for m in res_med_search.get("storeMatches", []))
+    test("VERIFY: Inwarded batch AZ-OCT26-01 in stockMatches", 200, code, has_azithral_batch)
+
+    # 26. Forgot Password Flow
     forgot_data = {
         "mobile": "8380036778",
         "new_password": "password123"
@@ -199,7 +257,7 @@ def run_tests():
     code, res = make_request("/api/auth/forgot-password", method="POST", data=forgot_data)
     test("POST /api/auth/forgot-password (Mobile password reset)", 200, code, res.get("success") is True)
 
-    # 22. Logout
+    # 27. Logout
     code, res = make_request("/api/auth/logout", method="POST", data={})
     test("POST /api/auth/logout", 200, code, res.get("success") is True)
 

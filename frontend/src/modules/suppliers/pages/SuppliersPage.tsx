@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Truck, 
@@ -20,7 +20,11 @@ export const SuppliersPage: React.FC = () => {
   const { t, language } = useUIStore();
   const isMr = language === 'mr';
   const navigate = useNavigate();
-  const { suppliers, addSupplier, stats, purchases } = usePharmacyStore();
+  const { suppliers, addSupplier, stats, purchases, fetchSuppliers } = usePharmacyStore();
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, [fetchSuppliers]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);

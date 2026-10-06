@@ -17,7 +17,8 @@ import {
   Sparkles,
   ShoppingCart,
   Stethoscope,
-  Database
+  Database,
+  FileText
 } from 'lucide-react';
 import { useUIStore } from '../../../stores/uiStore';
 import { usePharmacyStore } from '../../../stores/pharmacyStore';
@@ -68,6 +69,15 @@ export const BillingPage: React.FC = () => {
   const [newCustAddress, setNewCustAddress] = useState('');
 
   const [lastCheckoutData, setLastCheckoutData] = useState<{ invoiceNumber: string; total: number } | null>(null);
+
+  // Dedicated Print Engine State
+  const [printFormat, setPrintFormat] = useState<'thermal' | 'a4'>('thermal');
+  const [printedItems, setPrintedItems] = useState<typeof cart>([]);
+  const [printedInvoiceNo, setPrintedInvoiceNo] = useState('');
+  const [printedCustomerName, setPrintedCustomerName] = useState('');
+  const [printedCustomerMobile, setPrintedCustomerMobile] = useState('');
+  const [printedDoctorName, setPrintedDoctorName] = useState('');
+  const [printedTotal, setPrintedTotal] = useState(0);
 
   // Calculations
   const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
@@ -131,6 +141,14 @@ export const BillingPage: React.FC = () => {
       return;
     }
 
+    // Always take a snapshot of current cart data for printing or WhatsApp
+    setPrintedItems([...cart]);
+    setPrintedInvoiceNo(currentInvoiceNo);
+    setPrintedCustomerName(selectedCustomer?.fullName || patientName || 'Walk-in Customer');
+    setPrintedCustomerMobile(selectedCustomer?.mobile || '');
+    setPrintedDoctorName(doctorName);
+    setPrintedTotal(netTotal);
+
     if (actionType === 'print') {
       setShowPrintModal(true);
     } else if (actionType === 'whatsapp') {
@@ -147,11 +165,21 @@ export const BillingPage: React.FC = () => {
   };
 
   const handleConfirmPrint = () => {
+    // Re-ensure latest cart items are snapshotted
+    setPrintedItems([...cart]);
+    setPrintedInvoiceNo(currentInvoiceNo);
+    setPrintedCustomerName(selectedCustomer?.fullName || patientName || 'Walk-in Customer');
+    setPrintedCustomerMobile(selectedCustomer?.mobile || '');
+    setPrintedDoctorName(doctorName);
+    setPrintedTotal(netTotal);
+
     const result = checkoutCurrentBill();
     if (result.success) {
       setLastCheckoutData({ invoiceNumber: result.invoiceNumber, total: result.total });
       setShowPrintModal(false);
-      window.print();
+      setTimeout(() => {
+        window.print();
+      }, 150);
     }
   };
 
@@ -209,6 +237,15 @@ export const BillingPage: React.FC = () => {
     }
     setShowEmptyCartModal(false);
   };
+
+  const itemsToPrint = printedItems.length > 0 ? printedItems : cart;
+  const printSubtotal = itemsToPrint.reduce((sum, item) => sum + item.total, 0);
+  const printGst = Number((printSubtotal * 0.12).toFixed(2));
+  const printFinalTotal = printedTotal > 0 ? printedTotal : netTotal;
+  const printInv = printedInvoiceNo || currentInvoiceNo;
+  const printCustName = printedCustomerName || selectedCustomer?.fullName || patientName || 'Walk-in Customer';
+  const printCustMob = printedCustomerMobile || selectedCustomer?.mobile || '';
+  const printDoc = printedDoctorName || doctorName || '';
 
   return (
     <div className="space-y-4">
@@ -665,84 +702,175 @@ export const BillingPage: React.FC = () => {
       </Modal>
 
       {/* =========================================================
-          UPGRADED MODAL: PRINT BILL THERMAL PREVIEW MODAL
+          UPGRADED MODAL: PRINT BILL (THERMAL & A4 GST INVOICE)
           ========================================================= */}
       <Modal
         isOpen={showPrintModal}
         onClose={() => setShowPrintModal(false)}
-        title="Print Invoice Receipt"
-        subtitle="3-inch Thermal / Standard POS Slip Preview"
+        title="Print Pharmacy Invoice"
+        subtitle={printFormat === 'thermal' ? '3-inch Thermal POS Receipt (80mm Slip)' : 'A4 GST Tax Invoice (Rule 65 Compliance)'}
         icon={<Printer className="w-5 h-5 text-sky-600" />}
         iconBg="bg-sky-50 border-sky-100"
-        maxWidth="max-w-lg"
+        maxWidth={printFormat === 'thermal' ? 'max-w-md' : 'max-w-3xl'}
       >
         <div className="space-y-4 text-xs">
-          {/* Printable Thermal Receipt Card */}
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 font-mono text-slate-800 space-y-3 shadow-inner">
-            {/* Store Header */}
-            <div className="text-center border-b border-dashed border-slate-300 pb-3">
-              <h4 className="font-black text-base tracking-wider text-slate-900">MEDEASY PHARMACY</h4>
-              <p className="text-[11px] text-slate-500">Retail Tax Invoice</p>
-              <p className="text-[10px] text-slate-500 mt-1">Ph: +91 8380036778</p>
-            </div>
-
-            {/* Meta Row */}
-            <div className="flex justify-between items-center text-[11px] border-b border-dashed border-slate-300 pb-2">
-              <div>
-                <p>Inv: <strong>#{currentInvoiceNo}</strong></p>
-                <p>Customer: <strong>{selectedCustomer?.fullName || patientName || 'Walk-in Customer'}</strong></p>
-                {doctorName && <p>Dr: <strong>{doctorName}</strong></p>}
-                {patientName && selectedCustomer && <p>Patient: <strong>{patientName}</strong></p>}
-              </div>
-              <div className="text-right">
-                <p>Date: {new Date().toLocaleDateString('en-IN')}</p>
-                <p>Tender: <strong>{paymentMode}</strong></p>
-              </div>
-            </div>
-
-            {/* Cart Items Slip Table */}
-            <div className="border-b border-dashed border-slate-300 pb-2">
-              <div className="flex justify-between font-bold text-[10px] uppercase text-slate-500 mb-1">
-                <span>Item [Batch]</span>
-                <span>Qty x Rate = Total</span>
-              </div>
-              <div className="space-y-1.5">
-                {cart.map((item) => (
-                  <div key={item.id} className="flex justify-between items-baseline text-[11px]">
-                    <div>
-                      <span className="font-bold">{item.medicineName}</span>
-                      <span className="text-[10px] text-slate-400 ml-1">[{item.batchNumber}]</span>
-                    </div>
-                    <div className="font-bold text-slate-900">
-                      {item.quantity} x ₹{item.sellingPrice.toFixed(2)} = ₹{item.total.toFixed(2)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Totals */}
-            <div className="space-y-1 text-[11px]">
-              <div className="flex justify-between text-slate-500">
-                <span>Subtotal:</span>
-                <span>₹{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-slate-500">
-                <span>CGST (6%) + SGST (6%):</span>
-                <span>₹{gstAmount.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-base font-black text-slate-900 border-t border-dashed border-slate-300 pt-2 font-sans">
-                <span>NET PAYABLE:</span>
-                <span className="text-emerald-700">₹{netTotal.toFixed(2)}</span>
-              </div>
-            </div>
-
-            {/* Thermal Footer */}
-            <div className="text-center pt-2 text-[10px] text-slate-400 border-t border-dashed border-slate-300 space-y-0.5">
-              <p>*** THANK YOU! GET WELL SOON ***</p>
-              <p>Medicines once sold cannot be taken back without bill.</p>
-            </div>
+          {/* Format Switcher Tabs */}
+          <div className="flex bg-slate-100 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setPrintFormat('thermal')}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                printFormat === 'thermal'
+                  ? 'bg-white text-sky-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>3-inch Thermal Slip (80mm)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPrintFormat('a4')}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                printFormat === 'a4'
+                  ? 'bg-white text-sky-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Full Page A4 GST Invoice</span>
+            </button>
           </div>
+
+          {/* Format Preview */}
+          {printFormat === 'thermal' ? (
+            /* Thermal Receipt Preview */
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 font-mono text-slate-800 space-y-2.5 shadow-inner max-w-sm mx-auto">
+              <div className="text-center border-b border-dashed border-slate-300 pb-2">
+                <h4 className="font-black text-sm tracking-wider text-slate-900">MEDEASY PHARMACY</h4>
+                <p className="text-[10px] text-slate-500">Retail Tax Invoice</p>
+                <p className="text-[9px] text-slate-400">D.L.: MH-PUN-20B-184920 / 21B-184921</p>
+                <p className="text-[9px] text-slate-400">GSTIN: 27AABCM8291P1ZV | Ph: +91 8380036778</p>
+              </div>
+
+              <div className="flex justify-between items-center text-[10px] border-b border-dashed border-slate-300 pb-2">
+                <div>
+                  <p>Inv: <strong>#{currentInvoiceNo}</strong></p>
+                  <p>Cust: <strong>{selectedCustomer?.fullName || patientName || 'Walk-in Customer'}</strong></p>
+                  {doctorName && <p>Dr: <strong>{doctorName}</strong></p>}
+                </div>
+                <div className="text-right">
+                  <p>Date: {new Date().toLocaleDateString('en-IN')}</p>
+                  <p>Tender: <strong>{paymentMode}</strong></p>
+                </div>
+              </div>
+
+              <div className="border-b border-dashed border-slate-300 pb-2">
+                <div className="flex justify-between font-bold text-[9px] uppercase text-slate-500 mb-1">
+                  <span>Item [Batch]</span>
+                  <span>Qty x Rate = Total</span>
+                </div>
+                <div className="space-y-1">
+                  {cart.map((item) => (
+                    <div key={item.id} className="flex justify-between items-baseline text-[10px]">
+                      <div className="truncate max-w-[140px]">
+                        <span className="font-bold">{item.medicineName}</span>
+                        <span className="text-[8px] text-slate-400 ml-1">[{item.batchNumber}]</span>
+                      </div>
+                      <div className="font-bold text-slate-900">
+                        {item.quantity} x ₹{item.sellingPrice.toFixed(2)} = ₹{item.total.toFixed(2)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-0.5 text-[10px]">
+                <div className="flex justify-between text-slate-500">
+                  <span>Subtotal:</span>
+                  <span>₹{subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-slate-500">
+                  <span>CGST (6%) + SGST (6%):</span>
+                  <span>₹{gstAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm font-black text-slate-900 border-t border-dashed border-slate-300 pt-1.5 font-sans">
+                  <span>NET PAYABLE:</span>
+                  <span className="text-emerald-700">₹{netTotal.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="text-center pt-2 text-[9px] text-slate-400 border-t border-dashed border-slate-300 space-y-0.5">
+                <p>*** THANK YOU! GET WELL SOON ***</p>
+                <p>Medicines once sold cannot be taken back without bill.</p>
+              </div>
+            </div>
+          ) : (
+            /* A4 GST Invoice Preview */
+            <div className="bg-white border-2 border-slate-300 rounded-xl p-5 font-sans text-slate-800 space-y-3 shadow-inner max-h-[380px] overflow-y-auto">
+              <div className="text-center border-b pb-2">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 border border-slate-200 px-2 py-0.5 rounded">TAX INVOICE - RULE 65 COMPLIANT</span>
+                <h3 className="font-black text-base text-slate-900 mt-1 uppercase">MEDEASY PHARMACY & HEALTHCARE</h3>
+                <p className="text-[10px] text-slate-600">Shop 4, Commercial Complex, Sinhagad Road, Pune - 411030</p>
+                <p className="text-[9px] text-slate-500">D.L.: MH-PUN-20B-184920 / 21B-184921 | GSTIN: 27AABCM8291P1ZV</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-[10px] border-b pb-2">
+                <div>
+                  <p className="text-slate-400 font-bold uppercase text-[8px]">Patient / Buyer Details:</p>
+                  <p className="font-bold text-slate-900">{selectedCustomer?.fullName || patientName || 'Walk-in Customer'}</p>
+                  {selectedCustomer?.mobile && <p>Mobile: {selectedCustomer.mobile}</p>}
+                  {doctorName && <p>Doctor: Dr. {doctorName}</p>}
+                </div>
+                <div className="text-right">
+                  <p className="text-slate-400 font-bold uppercase text-[8px]">Invoice Meta:</p>
+                  <p>Inv: <strong>#{currentInvoiceNo}</strong></p>
+                  <p>Date: {new Date().toLocaleDateString('en-IN')}</p>
+                  <p>Mode: <strong className="uppercase">{paymentMode}</strong></p>
+                </div>
+              </div>
+
+              <table className="w-full text-left text-[10px]">
+                <thead className="bg-slate-100 text-slate-700 uppercase font-bold text-[9px]">
+                  <tr>
+                    <th className="p-1">#</th>
+                    <th className="p-1">Item</th>
+                    <th className="p-1 text-center">Batch</th>
+                    <th className="p-1 text-center">Exp</th>
+                    <th className="p-1 text-center">Qty</th>
+                    <th className="p-1 text-right">MRP</th>
+                    <th className="p-1 text-right">Rate</th>
+                    <th className="p-1 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {cart.map((item, idx) => (
+                    <tr key={item.id}>
+                      <td className="p-1">{idx + 1}</td>
+                      <td className="p-1 font-semibold">{item.medicineName}</td>
+                      <td className="p-1 text-center font-mono text-[9px]">{item.batchNumber}</td>
+                      <td className="p-1 text-center font-mono text-[9px]">{item.expiryDate || '12/2027'}</td>
+                      <td className="p-1 text-center font-bold">{item.quantity}</td>
+                      <td className="p-1 text-right font-mono">₹{item.mrp.toFixed(2)}</td>
+                      <td className="p-1 text-right font-mono">₹{item.sellingPrice.toFixed(2)}</td>
+                      <td className="p-1 text-right font-mono font-bold">₹{item.total.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="flex justify-between items-center border-t pt-2 text-[10px]">
+                <div className="text-slate-500 text-[9px]">
+                  <p>CGST 6% + SGST 6% Included</p>
+                  <p>Dispensed by Registered Pharmacist</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-slate-500">Subtotal: ₹{subtotal.toFixed(2)} | GST: ₹{gstAmount.toFixed(2)}</p>
+                  <p className="text-sm font-black text-slate-900">Grand Total: ₹{netTotal.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center justify-end gap-2.5 pt-2">
             <button
@@ -758,7 +886,7 @@ export const BillingPage: React.FC = () => {
               className="px-5 py-2.5 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white rounded-xl font-semibold shadow-md shadow-sky-600/20 transition cursor-pointer flex items-center gap-1.5"
             >
               <Printer className="w-4 h-4" />
-              <span>Print Thermal Slip (3-inch)</span>
+              <span>{printFormat === 'thermal' ? 'Print Thermal Slip (80mm)' : 'Print A4 GST Tax Invoice'}</span>
             </button>
           </div>
         </div>
@@ -973,6 +1101,225 @@ export const BillingPage: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      {/* =========================================================
+          PRINTABLE INVOICE ENGINE (Exclusively captured during window.print())
+          ========================================================= */}
+      <div id="printable-invoice" className="hidden print:block text-black bg-white">
+        {printFormat === 'thermal' ? (
+          /* 3-inch / 80mm POS Slip */
+          <div className="w-[78mm] max-w-[80mm] mx-auto p-2 font-mono text-[11px] leading-tight space-y-2">
+            {/* Pharmacy Branding Header */}
+            <div className="text-center pb-2 border-b border-dashed border-black">
+              <h2 className="font-black text-sm uppercase tracking-wider">MEDEASY PHARMACY</h2>
+              <p className="text-[10px] font-medium">Retail Drug Store & Healthcare</p>
+              <p className="text-[9px]">Shop 4, Galaxy Square, Sinhagad Rd, Pune 411030</p>
+              <p className="text-[9px]">D.L. No: MH-PUN-20B-184920 / 21B-184921</p>
+              <p className="text-[9px]">GSTIN: 27AABCM8291P1ZV | Mob: +91 8380036778</p>
+            </div>
+
+            {/* Metadata Info */}
+            <div className="py-1 border-b border-dashed border-black text-[10px] space-y-0.5">
+              <div className="flex justify-between">
+                <span>Inv: <strong>#{printInv}</strong></span>
+                <span>Date: {new Date().toLocaleDateString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Time: {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>Mode: <strong>{paymentMode.toUpperCase()}</strong></span>
+              </div>
+              <div>Customer: <strong>{printCustName}</strong> {printCustMob ? `(${printCustMob})` : ''}</div>
+              {printDoc && <div>Doctor: <strong>Dr. {printDoc}</strong></div>}
+            </div>
+
+            {/* Items Table */}
+            <div className="py-1 border-b border-dashed border-black">
+              <div className="flex justify-between font-bold text-[9px] uppercase border-b border-black pb-0.5 mb-1">
+                <span className="w-5/12">Item [Batch]</span>
+                <span className="w-2/12 text-center">Qty</span>
+                <span className="w-2/12 text-right">Rate</span>
+                <span className="w-3/12 text-right">Total</span>
+              </div>
+              {itemsToPrint.map((item, idx) => (
+                <div key={idx} className="flex justify-between text-[10px] py-0.5">
+                  <div className="w-5/12 truncate">
+                    <span className="font-bold">{item.medicineName}</span>
+                    <span className="text-[8px] block text-gray-700">[{item.batchNumber}]</span>
+                  </div>
+                  <div className="w-2/12 text-center font-bold">{item.quantity}</div>
+                  <div className="w-2/12 text-right">₹{item.sellingPrice.toFixed(2)}</div>
+                  <div className="w-3/12 text-right font-bold">₹{item.total.toFixed(2)}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Totals */}
+            <div className="py-1 border-b border-dashed border-black space-y-0.5 text-[10px]">
+              <div className="flex justify-between">
+                <span>Items Subtotal:</span>
+                <span>₹{printSubtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>CGST (6%) + SGST (6%):</span>
+                <span>₹{printGst.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-xs font-black pt-1 border-t border-black font-sans">
+                <span>NET PAYABLE:</span>
+                <span>₹{printFinalTotal.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="text-center pt-2 text-[9px] space-y-1">
+              <p className="font-bold">*** THANK YOU! GET WELL SOON ***</p>
+              <p>Medicines once sold can only be returned within 7 days with bill.</p>
+              <div className="pt-4 flex justify-between text-[9px]">
+                <span>Customer Sign</span>
+                <span>Pharmacist Sign</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Full Page A4 GST Tax Invoice */
+          <div className="w-full max-w-[210mm] mx-auto p-6 font-sans text-xs">
+            <div className="border-2 border-black p-5 space-y-4">
+              {/* Top Header */}
+              <div className="text-center border-b-2 border-black pb-3">
+                <div className="flex justify-between items-center text-[10px] font-bold uppercase text-gray-700 mb-1">
+                  <span>TAX INVOICE (RULE 65 D&amp;C ACT)</span>
+                  <span>ORIGINAL FOR RECIPIENT</span>
+                </div>
+                <h1 className="text-2xl font-black tracking-tight uppercase">MEDEASY PHARMACY &amp; HEALTHCARE</h1>
+                <p className="text-xs font-medium text-gray-700">Shop No. 4, Commercial Complex, Sinhagad Road, Pune, Maharashtra - 411030</p>
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] font-semibold mt-1">
+                  <span>D.L. No: <strong>MH-PUN-20B-184920 / 21B-184921</strong></span>
+                  <span>GSTIN: <strong>27AABCM8291P1ZV</strong></span>
+                  <span>FSSAI: <strong>11521034000123</strong></span>
+                  <span>Phone: <strong>+91 8380036778</strong></span>
+                </div>
+              </div>
+
+              {/* Billed To & Invoice Meta */}
+              <div className="grid grid-cols-2 gap-4 border-b border-black pb-3 text-xs">
+                <div className="space-y-1 border-r border-black pr-3">
+                  <p className="font-bold uppercase text-[10px] text-gray-600">Patient / Buyer Details:</p>
+                  <p className="font-bold text-sm">{printCustName}</p>
+                  {printCustMob && <p>Contact: <span className="font-mono">{printCustMob}</span></p>}
+                  {printDoc && <p>Prescribing Doctor: <strong>Dr. {printDoc}</strong></p>}
+                  <p>Place of Supply: <strong>Maharashtra (27)</strong></p>
+                </div>
+                <div className="space-y-1 pl-3 text-right">
+                  <p className="font-bold uppercase text-[10px] text-gray-600">Invoice Information:</p>
+                  <p>Invoice No: <strong className="font-mono text-sm">#{printInv}</strong></p>
+                  <p>Date: <strong>{new Date().toLocaleDateString('en-IN')}</strong></p>
+                  <p>Time: <strong>{new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</strong></p>
+                  <p>Payment Mode: <strong className="uppercase">{paymentMode}</strong></p>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <div>
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b-2 border-black text-[11px] font-bold uppercase bg-gray-100">
+                      <th className="py-1.5 px-2 w-8 text-center">#</th>
+                      <th className="py-1.5 px-2">Medicine / Product Details</th>
+                      <th className="py-1.5 px-2 text-center">HSN</th>
+                      <th className="py-1.5 px-2 text-center">Batch</th>
+                      <th className="py-1.5 px-2 text-center">Exp</th>
+                      <th className="py-1.5 px-2 text-center">Qty</th>
+                      <th className="py-1.5 px-2 text-right">MRP</th>
+                      <th className="py-1.5 px-2 text-right">Rate</th>
+                      <th className="py-1.5 px-2 text-center">GST%</th>
+                      <th className="py-1.5 px-2 text-right">Amount (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-300 text-xs">
+                    {itemsToPrint.map((item, index) => (
+                      <tr key={index}>
+                        <td className="py-1.5 px-2 text-center font-mono">{index + 1}</td>
+                        <td className="py-1.5 px-2">
+                          <div className="font-bold">{item.medicineName}</div>
+                        </td>
+                        <td className="py-1.5 px-2 text-center font-mono text-[11px]">300490</td>
+                        <td className="py-1.5 px-2 text-center font-mono text-[11px]">{item.batchNumber}</td>
+                        <td className="py-1.5 px-2 text-center font-mono text-[11px]">{item.expiryDate || '12/2027'}</td>
+                        <td className="py-1.5 px-2 text-center font-bold">{item.quantity}</td>
+                        <td className="py-1.5 px-2 text-right font-mono">₹{item.mrp.toFixed(2)}</td>
+                        <td className="py-1.5 px-2 text-right font-mono">₹{item.sellingPrice.toFixed(2)}</td>
+                        <td className="py-1.5 px-2 text-center">12%</td>
+                        <td className="py-1.5 px-2 text-right font-mono font-bold">₹{item.total.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Tax Breakdown & Totals */}
+              <div className="grid grid-cols-2 gap-4 border-t-2 border-black pt-3">
+                <div className="border border-black p-2.5 rounded text-[11px] space-y-1">
+                  <p className="font-bold uppercase text-[10px] text-gray-700">GST Breakdown (Intra-State 12%):</p>
+                  <div className="flex justify-between">
+                    <span>Taxable Value:</span>
+                    <span className="font-mono">₹{printSubtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>CGST (6%):</span>
+                    <span className="font-mono">₹{(printGst / 2).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>SGST (6%):</span>
+                    <span className="font-mono">₹{(printGst / 2).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold border-t border-gray-400 pt-0.5">
+                    <span>Total Tax:</span>
+                    <span className="font-mono">₹{printGst.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="border border-black p-2.5 rounded space-y-1 text-right">
+                  <div className="flex justify-between text-xs">
+                    <span>Items Subtotal:</span>
+                    <span className="font-mono">₹{printSubtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span>Total GST:</span>
+                    <span className="font-mono">₹{printGst.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>Round Off:</span>
+                    <span className="font-mono">₹0.00</span>
+                  </div>
+                  <div className="flex justify-between text-base font-black border-t-2 border-black pt-1">
+                    <span>GRAND TOTAL:</span>
+                    <span className="font-mono">₹{printFinalTotal.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Statutory Declarations & Signatures */}
+              <div className="pt-4 border-t border-black text-[10px] space-y-4">
+                <div>
+                  <p className="font-bold uppercase text-gray-700">Statutory Declarations:</p>
+                  <p>1. Certified that the drugs sold are purchased from licensed manufacturers/distributors and stored as per Drugs and Cosmetics Act 1940.</p>
+                  <p>2. Schedule H / H1 medicines dispensed strictly against registered medical practitioner prescription.</p>
+                  <p>3. Goods once sold will be accepted back only in original sealed packaging within 7 calendar days.</p>
+                </div>
+
+                <div className="flex justify-between items-end pt-8">
+                  <div className="text-center w-48 border-t border-black pt-1">
+                    <p className="font-medium">Customer's Signature</p>
+                  </div>
+                  <div className="text-center w-64 border-t border-black pt-1">
+                    <p className="font-bold">For MEDEASY PHARMACY</p>
+                    <p className="text-[9px] text-gray-600">Registered Pharmacist &amp; Dispenser</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
     </div>
   );

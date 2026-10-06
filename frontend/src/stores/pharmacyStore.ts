@@ -83,10 +83,12 @@ interface PharmacyState {
   isLoadingSales: boolean;
 
   // Supplier actions
-  addSupplier: (supplier: Omit<Supplier, 'id'>) => void;
+  addSupplier: (supplier: Omit<Supplier, 'id'>) => Promise<void>;
+  fetchSuppliers: () => Promise<void>;
 
   // Purchase actions
-  addPurchase: (purchase: Omit<PurchaseInvoice, 'id'>) => void;
+  addPurchase: (purchase: Omit<PurchaseInvoice, 'id'>) => Promise<void>;
+  fetchPurchases: () => Promise<void>;
 }
 
 export const usePharmacyStore = create<PharmacyState>((set, get) => ({
@@ -617,7 +619,7 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
     }
   },
 
-  addPurchase: (purchaseData) => {
+  addPurchase: async (purchaseData) => {
     const newPurchase: PurchaseInvoice = {
       ...purchaseData,
       id: `pur-${Date.now()}`,
@@ -673,12 +675,57 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
         todayPurchaseTotal: Number((state.stats.todayPurchaseTotal + purchaseData.netTotal).toFixed(2))
       }
     }));
+
+    // Async DB persistence
+    try {
+      const token = localStorage.getItem('medeasy_auth_token');
+      const payload = {
+        supplierId: purchaseData.supplierId,
+        supplierName: purchaseData.supplierName,
+        supplierInvoiceNumber: purchaseData.supplierInvoiceNumber,
+        purchaseDate: purchaseData.purchaseDate,
+        paymentMode: purchaseData.paymentMode || 'BANK_TRANSFER',
+        items: purchaseData.items.map((it) => ({
+          medicineName: it.medicineName,
+          batchNumber: it.batchNumber,
+          expiryDate: it.expiryDate,
+          quantity: it.quantity,
+          freeQuantity: it.freeQuantity || 0,
+          purchasePrice: it.purchasePrice,
+          mrp: it.mrp,
+          sellingPrice: it.sellingPrice || it.mrp * 0.9,
+          gstRate: it.gstRate || 12.0,
+          total: it.totalAmount || (it.quantity * it.purchasePrice)
+        })),
+        subtotal: purchaseData.subtotal,
+        discountAmount: purchaseData.discountAmount || 0,
+        gstAmount: purchaseData.gstAmount || 0,
+        netTotal: purchaseData.netTotal,
+        notes: purchaseData.notes
+      };
+
+      fetch(`${API_BASE_URL}/api/purchases`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      }).then(async (res) => {
+        if (res.ok) {
+          get().fetchPurchases();
+        }
+      }).catch((e) => console.error('Failed to sync purchase to DB:', e));
+    } catch (e) {
+      console.error('Failed to dispatch purchase sync:', e);
+    }
   },
 
-  addSupplier: (supplierData) => {
+  addSupplier: async (supplierData) => {
+    const tempId = `sup-${Date.now()}`;
     const newSupplier: Supplier = {
       ...supplierData,
-      id: `sup-${Date.now()}`,
+      id: tempId,
       isActive: true
     };
     set((state) => ({
@@ -688,14 +735,78 @@ export const usePharmacyStore = create<PharmacyState>((set, get) => ({
         totalSuppliersCount: state.stats.totalSuppliersCount + 1
       }
     }));
+
+    try {
+      const token = localStorage.getItem('medeasy_auth_token');
+      const res = await fetch(`${API_BASE_URL}/api/suppliers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(supplierData)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.supplier) {
+          set((state) => ({
+            suppliers: state.suppliers.map((s) => s.id === tempId ? data.supplier : s)
+          }));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to sync supplier to DB:', e);
+    }
+  },
+
+  fetchSuppliers: async () => {
+    try {
+      const token = localStorage.getItem('medeasy_auth_token');
+      const res = await fetch(`${API_BASE_URL}/api/suppliers`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.suppliers && data.suppliers.length > 0) {
+          set((state) => ({
+            suppliers: data.suppliers,
+            stats: {
+              ...state.stats,
+              totalSuppliersCount: data.suppliers.length
+            }
+          }));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch suppliers from DB:', e);
+    }
+  },
+
+  fetchPurchases: async () => {
+    try {
+      const token = localStorage.getItem('medeasy_auth_token');
+      const res = await fetch(`${API_BASE_URL}/api/purchases`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.purchases) {
+          set({ purchases: data.purchases });
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch purchases from DB:', e);
+    }
   }
 }));
 
-// Auto-load customers and sales from backend when app boots
+// Auto-load customers, sales, suppliers, and purchases from backend when app boots
 if (typeof window !== 'undefined') {
   setTimeout(() => {
     usePharmacyStore.getState().fetchCustomers();
     usePharmacyStore.getState().fetchSales();
+    usePharmacyStore.getState().fetchSuppliers();
+    usePharmacyStore.getState().fetchPurchases();
   }, 100);
 }
 

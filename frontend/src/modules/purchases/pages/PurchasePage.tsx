@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Save, 
   Plus, 
@@ -17,7 +17,12 @@ import { Modal } from '../../../components/ui/Modal';
 
 export const PurchasePage: React.FC = () => {
   const { t } = useUIStore();
-  const { suppliers, purchases, addPurchase } = usePharmacyStore();
+  const { suppliers, purchases, addPurchase, fetchPurchases, fetchSuppliers } = usePharmacyStore();
+
+  useEffect(() => {
+    fetchPurchases();
+    fetchSuppliers();
+  }, [fetchPurchases, fetchSuppliers]);
 
   const [activeTab, setActiveTab] = useState<'entry' | 'history'>('entry');
   const [historySearch, setHistorySearch] = useState('');

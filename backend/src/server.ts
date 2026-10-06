@@ -6,6 +6,8 @@ import { authRouter } from "./routes/auth.routes";
 import { medicineRouter } from "./routes/medicine.routes";
 import { customerRouter } from "./routes/customer.routes";
 import { saleRouter } from "./routes/sale.routes";
+import { supplierRouter } from "./routes/supplier.routes";
+import { purchaseRouter } from "./routes/purchase.routes";
 
 dotenv.config();
 
@@ -56,6 +58,12 @@ app.use("/api/customers", customerRouter);
 
 // Sales & POS Invoicing Routes
 app.use("/api/sales", saleRouter);
+
+// Supplier Directory Routes
+app.use("/api/suppliers", supplierRouter);
+
+// Purchases & Inward Entry Routes
+app.use("/api/purchases", purchaseRouter);
 
 // Start server
 app.listen(PORT, () => {
