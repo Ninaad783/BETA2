@@ -48,10 +48,10 @@ export const CustomersPage: React.FC = () => {
     ? Math.round(totalLifetimePurchases / totalBillsAcrossCustomers) 
     : 0;
 
-  const handleCreateCustomer = (e: React.FormEvent) => {
+  const handleCreateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !mobile) return;
-    addCustomer({ fullName: name, mobile, address: address || '' });
+    await addCustomer({ fullName: name.trim(), mobile: mobile.trim(), address: address ? address.trim() : '' });
     setShowAddModal(false);
     setName('');
     setMobile('');
@@ -206,7 +206,17 @@ export const CustomersPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="p-3 text-slate-500 font-medium">
-                      {cust.lastPurchaseDate}
+                      {cust.lastPurchaseDate && cust.lastPurchaseDate !== 'None' ? (
+                        cust.lastPurchaseDate.includes('T') ? (
+                          new Date(cust.lastPurchaseDate).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })
+                        ) : cust.lastPurchaseDate
+                      ) : (
+                        <span className="text-slate-400 italic text-[11px]">—</span>
+                      )}
                     </td>
                     <td className="p-3 text-slate-500">
                       <span className="flex items-center gap-1 text-[11px] truncate max-w-[180px]">

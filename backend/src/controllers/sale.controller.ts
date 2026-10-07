@@ -196,8 +196,8 @@ export const createSaleInvoice = async (req: AuthenticatedRequest, res: Response
     if (finalCustomerId) {
       await client.query(
         `UPDATE customers
-         SET total_purchases = total_purchases + $1,
-             total_bills = total_bills + 1,
+         SET total_purchases = COALESCE(total_purchases, 0) + $1,
+             total_bills = COALESCE(total_bills, 0) + 1,
              last_purchase_date = NOW(),
              updated_at = NOW()
          WHERE id = $2;`,

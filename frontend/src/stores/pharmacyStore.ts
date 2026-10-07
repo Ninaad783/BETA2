@@ -77,7 +77,7 @@ interface PharmacyState {
   addBatchToMedicine: (medicineId: string, batchData: Omit<MedicineBatch, 'id' | 'medicineId'>) => void;
 
   // Customer actions
-  addCustomer: (customer: Omit<Customer, 'id' | 'totalPurchases' | 'totalBills' | 'lastPurchaseDate'>) => Promise<void>;
+  addCustomer: (customer: Omit<Customer, 'id' | 'totalPurchases' | 'totalBills' | 'lastPurchaseDate'>) => Promise<Customer | null>;
   fetchCustomers: () => Promise<void>;
   isLoadingCustomers: boolean;
 
@@ -271,16 +271,22 @@ export const usePharmacyStore = create<PharmacyState>()(
       };
     });
 
-    // 2. Update customer statistics only (no Udhaar ledger)
+    // 2. Resolve selected customer robustly (by ID or mobile)
+    const selectedCustomer = customers.find((c) => 
+      c.id === selectedCustomerId || 
+      (selectedCustomerId && c.mobile && c.mobile === selectedCustomerId)
+    );
+
+    // Update customer statistics in local state immediately
     let updatedCustomers = customers;
-    if (selectedCustomerId) {
+    if (selectedCustomer) {
       updatedCustomers = customers.map((c) => {
-        if (c.id === selectedCustomerId) {
+        if (c.id === selectedCustomer.id || (c.mobile && c.mobile === selectedCustomer.mobile)) {
           return {
             ...c,
-            totalPurchases: Number((c.totalPurchases + total).toFixed(2)),
-            totalBills: c.totalBills + 1,
-            lastPurchaseDate: 'Today'
+            totalPurchases: Number(((c.totalPurchases || 0) + total).toFixed(2)),
+            totalBills: (c.totalBills || 0) + 1,
+            lastPurchaseDate: new Date().toISOString()
           };
         }
         return c;
@@ -296,7 +302,6 @@ export const usePharmacyStore = create<PharmacyState>()(
     };
 
     // 4. Record real SaleInvoice
-    const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
     const itemsSummary = cart
       .map((item) => `${item.medicineName} (${item.quantity}x)`)
       .join(', ');
@@ -304,7 +309,7 @@ export const usePharmacyStore = create<PharmacyState>()(
     const newInvoice: SaleInvoice = {
       id: `inv-${Date.now()}`,
       invoiceNumber,
-      customerId: selectedCustomerId || undefined,
+      customerId: selectedCustomer?.id || selectedCustomerId || undefined,
       customerName: selectedCustomer?.fullName || patientName || 'Walk-in Customer',
       customerMobile: selectedCustomer?.mobile,
       date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
@@ -329,6 +334,7 @@ export const usePharmacyStore = create<PharmacyState>()(
       stats: updatedStats,
       salesInvoices: [newInvoice, ...(salesInvoices || [])],
       cart: [],
+      selectedCustomerId: '', // Reset customer to walk-in after checkout
       doctorName: '',
       patientName: '',
       invoiceCounter: invoiceCounter + 1
@@ -338,7 +344,7 @@ export const usePharmacyStore = create<PharmacyState>()(
     try {
       const token = localStorage.getItem('medeasy_auth_token');
       const payload = {
-        customerId: selectedCustomerId || undefined,
+        customerId: selectedCustomer?.id || selectedCustomerId || undefined,
         customerName: selectedCustomer?.fullName || patientName || 'Walk-in Customer',
         customerMobile: selectedCustomer?.mobile,
         doctorName: doctorName || undefined,
@@ -651,13 +657,16 @@ export const usePharmacyStore = create<PharmacyState>()(
         const data = await res.json();
         if (data.customer) {
           set((state) => ({
-            customers: state.customers.map((c) => c.id === tempId ? data.customer : c)
+            customers: state.customers.map((c) => (c.id === tempId ? data.customer : c)),
+            selectedCustomerId: state.selectedCustomerId === tempId ? data.customer.id : state.selectedCustomerId
           }));
+          return data.customer;
         }
       }
     } catch (err) {
       console.error('Failed to sync new customer to backend:', err);
     }
+    return newCustomer;
   },
 
   fetchCustomers: async () => {
@@ -670,13 +679,42 @@ export const usePharmacyStore = create<PharmacyState>()(
       if (res.ok) {
         const data = await res.json();
         if (data.customers && data.customers.length > 0) {
-          set((state) => ({
-            customers: data.customers,
-            stats: {
-              ...state.stats,
-              totalCustomersCount: data.customers.length
-            }
-          }));
+          set((state) => {
+            const dbMap = new Map(data.customers.map((c: Customer) => [c.id, c]));
+            const dbMobileMap = new Map(data.customers.map((c: Customer) => [c.mobile, c]));
+
+            const merged = data.customers.map((dbCust: Customer) => {
+              const localCust = state.customers.find(
+                (lc) => lc.id === dbCust.id || (lc.mobile && lc.mobile === dbCust.mobile)
+              );
+              if (localCust) {
+                const maxPurchases = Math.max(Number(dbCust.totalPurchases || 0), Number(localCust.totalPurchases || 0));
+                const maxBills = Math.max(Number(dbCust.totalBills || 0), Number(localCust.totalBills || 0));
+                return {
+                  ...dbCust,
+                  totalPurchases: maxPurchases,
+                  totalBills: maxBills,
+                  lastPurchaseDate: dbCust.lastPurchaseDate || localCust.lastPurchaseDate
+                };
+              }
+              return dbCust;
+            });
+
+            // Keep locally created customer not yet in DB
+            state.customers.forEach((lc) => {
+              if (!dbMap.has(lc.id) && (!lc.mobile || !dbMobileMap.has(lc.mobile))) {
+                merged.unshift(lc);
+              }
+            });
+
+            return {
+              customers: merged,
+              stats: {
+                ...state.stats,
+                totalCustomersCount: merged.length
+              }
+            };
+          });
         }
       }
     } catch (err) {

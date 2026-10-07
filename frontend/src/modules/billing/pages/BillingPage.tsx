@@ -217,14 +217,17 @@ export const BillingPage: React.FC = () => {
     }
   };
 
-  const handleCreateCustomer = (e: React.FormEvent) => {
+  const handleCreateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustName || !newCustMobile) return;
-    addCustomer({
-      fullName: newCustName,
-      mobile: newCustMobile,
-      address: newCustAddress || ''
+    const createdCust = await addCustomer({
+      fullName: newCustName.trim(),
+      mobile: newCustMobile.trim(),
+      address: newCustAddress ? newCustAddress.trim() : ''
     });
+    if (createdCust && createdCust.id) {
+      setSelectedCustomerId(createdCust.id);
+    }
     setShowNewCustomerModal(false);
     setNewCustName('');
     setNewCustMobile('');
@@ -412,20 +415,35 @@ export const BillingPage: React.FC = () => {
 
           {/* Customer Selector Bar */}
           <div className="bg-white px-5 py-3.5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <span className="text-xs font-semibold text-slate-600">{t('customer')}:</span>
               <select
                 value={selectedCustomerId}
                 onChange={(e) => setSelectedCustomerId(e.target.value)}
-                className="text-xs border border-slate-300 rounded-lg px-3 py-1.5 bg-slate-50 font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                className="text-xs border border-slate-300 rounded-lg px-3 py-1.5 bg-slate-50 font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none max-w-xs"
               >
                 <option value="">{t('walkInCustomer')}</option>
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.fullName} (Mob: {c.mobile}) — {c.totalBills} bills
+                    {c.fullName} (Mob: {c.mobile}) — ₹{Number(c.totalPurchases || 0).toFixed(0)} spent ({c.totalBills} bills)
                   </option>
                 ))}
               </select>
+
+              {selectedCustomer && (
+                <div className="flex items-center gap-1.5 bg-sky-50 text-sky-800 border border-sky-200 px-2.5 py-1 rounded-lg text-xs font-semibold animate-in fade-in">
+                  <span>Selected: {selectedCustomer.fullName}</span>
+                  <span className="text-slate-500 font-mono">({selectedCustomer.mobile})</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCustomerId('')}
+                    className="ml-1 text-slate-400 hover:text-rose-600 transition font-bold px-1"
+                    title="Switch to Walk-in Customer"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
             </div>
             <button
               onClick={() => setShowNewCustomerModal(true)}
