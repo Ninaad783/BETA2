@@ -1,15 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, AlertTriangle, Clock, Users, Database, Check, X, Pill, User, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Search, Bell, AlertTriangle, Clock, Users, Database, Check, X, Pill, User, PanelLeftClose, PanelLeftOpen, Loader2 } from 'lucide-react';
 import { useUIStore } from '../stores/uiStore';
 import { usePharmacyStore } from '../stores/pharmacyStore';
+import { API_BASE_URL } from '../lib/apiClient';
 
 export const TopHeader: React.FC = () => {
   const navigate = useNavigate();
   const { language, setLanguage, activeNotificationCount, sidebarOpen, toggleSidebar } = useUIStore();
-  const { searchQuery, setSearchQuery, stats, medicines, customers } = usePharmacyStore();
+  const { searchQuery, setSearchQuery, stats, medicines, customers, addMasterItemToCart } = usePharmacyStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [apiStoreMeds, setApiStoreMeds] = useState<any[]>([]);
+  const [apiMasterMeds, setApiMasterMeds] = useState<any[]>([]);
+  const [isSearchingApi, setIsSearchingApi] = useState(false);
+
   const notificationRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -27,11 +32,56 @@ export const TopHeader: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const matchingMeds = medicines.filter(
-    (m) =>
-      m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.genericName.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 4);
+  // Debounced live API search querying PostgreSQL store medicines AND 1000+ Master Medicines
+  useEffect(() => {
+    if (!searchQuery || searchQuery.trim().length < 2) {
+      setApiStoreMeds([]);
+      setApiMasterMeds([]);
+      setIsSearchingApi(false);
+      return;
+    }
+
+    setIsSearchingApi(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/medicines/search?q=${encodeURIComponent(searchQuery.trim())}&limit=8`);
+        if (res.ok) {
+          const data = await res.json();
+          setApiStoreMeds(data.storeMatches || []);
+          setApiMasterMeds(data.masterMatches || []);
+        }
+      } catch (err) {
+        console.error('Header search error:', err);
+      } finally {
+        setIsSearchingApi(false);
+      }
+    }, 180);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Combine local inventory medicines with backend store matches
+  const storeMedicineMap = new Map();
+  medicines
+    .filter(
+      (m) =>
+        m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.genericName.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .forEach((m) => storeMedicineMap.set(m.name.toLowerCase(), m));
+
+  apiStoreMeds.forEach((m) => {
+    if (!storeMedicineMap.has(m.name.toLowerCase())) {
+      storeMedicineMap.set(m.name.toLowerCase(), m);
+    }
+  });
+
+  const matchingMeds = Array.from(storeMedicineMap.values()).slice(0, 5);
+
+  // Master medicines (1000+ Indian catalog)
+  const matchingMasterMeds = apiMasterMeds
+    .filter((mm) => !storeMedicineMap.has(mm.name.toLowerCase()))
+    .slice(0, 5);
 
   const matchingCusts = customers.filter(
     (c) =>
@@ -94,15 +144,23 @@ export const TopHeader: React.FC = () => {
           )}
         </div>
 
-        {/* Global Live Search Results Dropdown */}
+        {/* Global Live Search Results Dropdown - Full width on mobile, sleek flyout on desktop */}
         {showSearchDropdown && searchQuery.trim() !== '' && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden z-50 divide-y divide-slate-100 text-xs animate-in fade-in zoom-in-95 duration-100">
-            {matchingMeds.length > 0 || matchingCusts.length > 0 ? (
+          <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-2 sm:w-[420px] bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden z-50 divide-y divide-slate-100 text-xs max-h-[75vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
+            {isSearchingApi && (
+              <div className="p-3 bg-sky-50/70 text-sky-700 flex items-center justify-center gap-2 text-xs font-semibold">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Searching 1,000+ medicine catalog...</span>
+              </div>
+            )}
+
+            {matchingMeds.length > 0 || matchingMasterMeds.length > 0 || matchingCusts.length > 0 ? (
               <>
+                {/* 1. In-Store Inventory Medicines */}
                 {matchingMeds.length > 0 && (
                   <div className="p-2">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1 block">
-                      Medicines ({matchingMeds.length})
+                      In-Stock Medicines ({matchingMeds.length})
                     </span>
                     {matchingMeds.map((med) => (
                       <div
@@ -114,26 +172,61 @@ export const TopHeader: React.FC = () => {
                         }}
                         className="px-2.5 py-2 hover:bg-sky-50/70 rounded-xl cursor-pointer flex items-center justify-between transition"
                       >
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
                             <Pill className="w-3.5 h-3.5" />
                           </div>
-                          <div>
-                            <p className="font-bold text-slate-900">{med.name}</p>
-                            <p className="text-[11px] text-slate-500">{med.genericName} • Rack {med.rackLocation || 'A-01'}</p>
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-900 truncate">{med.name}</p>
+                            <p className="text-[11px] text-slate-500 truncate">{med.genericName} • Rack {med.rackLocation || 'A-01'}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <span className="font-bold text-slate-900">₹{med.sellingPrice.toFixed(2)}</span>
-                          <span className="text-[10px] text-slate-400 block">{med.totalStock} {med.unit}s</span>
+                        <div className="text-right shrink-0 ml-2">
+                          <span className="font-bold text-slate-900">₹{(med.sellingPrice || med.mrp || 0).toFixed(2)}</span>
+                          <span className="text-[10px] text-emerald-600 block font-semibold">{med.totalStock || 0} in stock</span>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
 
+                {/* 2. Indian Master Drug Database (1,000+ Items) */}
+                {matchingMasterMeds.length > 0 && (
+                  <div className="p-2 bg-slate-50/60">
+                    <span className="text-[10px] font-bold text-sky-700 uppercase tracking-wider px-2 py-1 flex items-center gap-1">
+                      <Database className="w-3 h-3 text-sky-600" />
+                      <span>Master Drug Database ({matchingMasterMeds.length})</span>
+                    </span>
+                    {matchingMasterMeds.map((med) => (
+                      <div
+                        key={med.id}
+                        onClick={() => {
+                          setShowSearchDropdown(false);
+                          setSearchQuery('');
+                          addMasterItemToCart(med);
+                          navigate('/billing');
+                        }}
+                        className="px-2.5 py-2 hover:bg-sky-50 rounded-xl cursor-pointer flex items-center justify-between transition"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-slate-900 truncate">{med.name}</span>
+                            <span className="text-[9px] bg-sky-100 text-sky-800 font-semibold px-1.5 py-0.2 rounded shrink-0">{med.form || 'Tab'}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 truncate">{med.generic_name} • {med.manufacturer || 'Mfr'}</p>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <span className="font-bold text-xs text-sky-700">₹{Number(med.typical_mrp || 50).toFixed(2)}</span>
+                          <span className="text-[10px] text-emerald-600 block font-semibold">+ 1-Click Bill</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 3. Customer Directory Results */}
                 {matchingCusts.length > 0 && (
-                  <div className="p-2 bg-slate-50/50">
+                  <div className="p-2 bg-slate-50/30">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1 block">
                       Customers ({matchingCusts.length})
                     </span>
@@ -147,20 +240,20 @@ export const TopHeader: React.FC = () => {
                         }}
                         className="px-2.5 py-2 hover:bg-sky-50/70 rounded-xl cursor-pointer flex items-center justify-between transition"
                       >
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
                             <User className="w-3.5 h-3.5" />
                           </div>
-                          <div>
-                            <p className="font-bold text-slate-900">{cust.fullName}</p>
-                            <p className="text-[11px] text-slate-500">{cust.mobile}</p>
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-900 truncate">{cust.fullName}</p>
+                            <p className="text-[11px] text-slate-500 font-mono truncate">{cust.mobile}</p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right shrink-0 ml-2">
                           <span className="text-slate-700 font-semibold font-mono text-[11px]">
-                            ₹{cust.totalPurchases.toLocaleString('en-IN')}
+                            ₹{Number(cust.totalPurchases || 0).toLocaleString('en-IN')}
                           </span>
-                          <span className="text-[10px] text-slate-400 block">{cust.totalBills} bills</span>
+                          <span className="text-[10px] text-slate-400 block">{cust.totalBills || 0} bills</span>
                         </div>
                       </div>
                     ))}
@@ -168,10 +261,12 @@ export const TopHeader: React.FC = () => {
                 )}
               </>
             ) : (
-              <div className="p-6 text-center text-slate-400">
-                <p className="font-semibold text-slate-600">No results found</p>
-                <p className="text-[11px] mt-0.5">Try searching medicine name, generic salt, or customer mobile</p>
-              </div>
+              !isSearchingApi && (
+                <div className="p-6 text-center text-slate-400">
+                  <p className="font-semibold text-slate-600">No results found</p>
+                  <p className="text-[11px] mt-0.5">Try searching medicine name (e.g. Dolo, Pan), salt, or customer mobile</p>
+                </div>
+              )
             )}
           </div>
         )}
@@ -199,17 +294,25 @@ export const TopHeader: React.FC = () => {
             )}
           </button>
 
-          {/* Sleek Notification Popover */}
+          {/* Sleek Notification Popover - Fixed full-width on mobile to avoid left cut-off */}
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
                 <div>
                   <h4 className="font-bold text-xs tracking-wide">Live Pharmacy Alerts</h4>
                   <p className="text-[11px] text-slate-400 mt-0.5">Automated store warnings</p>
                 </div>
-                <span className="bg-sky-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                  {stats.lowStockCount + stats.expiringSoonBatchesCount} Alerts
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="bg-sky-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {stats.lowStockCount + stats.expiringSoonBatchesCount} Alerts
+                  </span>
+                  <button
+                    onClick={() => setShowNotifications(false)}
+                    className="sm:hidden text-slate-400 hover:text-white p-1"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
 
               <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 text-xs">

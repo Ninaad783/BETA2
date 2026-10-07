@@ -414,13 +414,27 @@ export const BillingPage: React.FC = () => {
           </div>
 
           {/* Customer Selector Bar */}
-          <div className="bg-white px-5 py-3.5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="text-xs font-semibold text-slate-600">{t('customer')}:</span>
+          <div className="bg-white p-3 sm:px-5 sm:py-3.5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 min-w-0">
+              <div className="flex items-center justify-between sm:justify-start gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                  <User className="w-3.5 h-3.5 text-sky-600" />
+                  <span>{t('customer')}:</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowNewCustomerModal(true)}
+                  className="sm:hidden text-xs text-sky-600 hover:text-sky-800 font-semibold flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 transition cursor-pointer"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>+ New Customer</span>
+                </button>
+              </div>
+
               <select
                 value={selectedCustomerId}
                 onChange={(e) => setSelectedCustomerId(e.target.value)}
-                className="text-xs border border-slate-300 rounded-lg px-3 py-1.5 bg-slate-50 font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none max-w-xs"
+                className="w-full sm:w-auto text-xs border border-slate-300 rounded-lg px-3 py-2 sm:py-1.5 bg-slate-50 font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none sm:max-w-xs truncate"
               >
                 <option value="">{t('walkInCustomer')}</option>
                 {customers.map((c) => (
@@ -431,13 +445,13 @@ export const BillingPage: React.FC = () => {
               </select>
 
               {selectedCustomer && (
-                <div className="flex items-center gap-1.5 bg-sky-50 text-sky-800 border border-sky-200 px-2.5 py-1 rounded-lg text-xs font-semibold animate-in fade-in">
-                  <span>Selected: {selectedCustomer.fullName}</span>
-                  <span className="text-slate-500 font-mono">({selectedCustomer.mobile})</span>
+                <div className="flex items-center justify-between sm:justify-start gap-1.5 bg-sky-50 text-sky-800 border border-sky-200 px-2.5 py-1.5 sm:py-1 rounded-lg text-xs font-semibold animate-in fade-in">
+                  <span className="truncate">Selected: {selectedCustomer.fullName}</span>
+                  <span className="text-slate-500 font-mono text-[11px] shrink-0">({selectedCustomer.mobile})</span>
                   <button
                     type="button"
                     onClick={() => setSelectedCustomerId('')}
-                    className="ml-1 text-slate-400 hover:text-rose-600 transition font-bold px-1"
+                    className="ml-1 text-slate-400 hover:text-rose-600 transition font-bold px-1 shrink-0"
                     title="Switch to Walk-in Customer"
                   >
                     ✕
@@ -445,9 +459,11 @@ export const BillingPage: React.FC = () => {
                 </div>
               )}
             </div>
+
             <button
+              type="button"
               onClick={() => setShowNewCustomerModal(true)}
-              className="text-xs text-sky-600 hover:text-sky-800 font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-sky-50 transition cursor-pointer"
+              className="hidden sm:flex text-xs text-sky-600 hover:text-sky-800 font-semibold items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-sky-50 transition cursor-pointer shrink-0"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>+ New Customer</span>
@@ -455,12 +471,12 @@ export const BillingPage: React.FC = () => {
           </div>
 
           {/* Schedule H / Doctor & Patient Details Bar */}
-          <div className="bg-white px-5 py-3 rounded-2xl border border-slate-200/90 shadow-xs flex flex-wrap items-center gap-3 text-xs">
+          <div className="bg-white p-3 sm:px-5 sm:py-3 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 text-xs">
             <div className="flex items-center gap-1.5 text-slate-600 font-semibold shrink-0">
               <Stethoscope className="w-3.5 h-3.5 text-rose-500" />
               <span>Rx / Doctor:</span>
             </div>
-            <div className="flex-1 min-w-[160px]">
+            <div className="flex-1 min-w-0 sm:min-w-[160px]">
               <input
                 type="text"
                 value={doctorName}
@@ -469,7 +485,7 @@ export const BillingPage: React.FC = () => {
                 className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
               />
             </div>
-            <div className="flex-1 min-w-[160px]">
+            <div className="flex-1 min-w-0 sm:min-w-[160px]">
               <input
                 type="text"
                 value={patientName}
