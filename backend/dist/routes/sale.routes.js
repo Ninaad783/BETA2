@@ -7,3 +7,4 @@ exports.saleRouter = (0, express_1.Router)();
 exports.saleRouter.post('/', sale_controller_1.createSaleInvoice);
 exports.saleRouter.get('/', sale_controller_1.getSaleInvoices);
 exports.saleRouter.get('/:id', sale_controller_1.getSaleInvoiceById);
+exports.saleRouter.post('/:id/cancel', sale_controller_1.cancelSaleInvoice);

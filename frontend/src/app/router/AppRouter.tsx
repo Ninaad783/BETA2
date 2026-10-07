@@ -12,6 +12,8 @@ import { PurchasePage } from '../../modules/purchases/pages/PurchasePage';
 import { CustomersPage } from '../../modules/customers/pages/CustomersPage';
 import { CustomerDetailsPage } from '../../modules/customers/pages/CustomerDetailsPage';
 import { SettingsPage } from '../../modules/settings/pages/SettingsPage';
+import { SalesHistoryPage } from '../../modules/billing/pages/SalesHistoryPage';
+import { ReportsPage } from '../../modules/reports/pages/ReportsPage';
 
 export const AppRouter: React.FC = () => {
   return (
@@ -24,15 +26,17 @@ export const AppRouter: React.FC = () => {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/billing" element={<BillingPage />} />
+            <Route path="/sales" element={<SalesHistoryPage />} />
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/customers/:id" element={<CustomerDetailsPage />} />
 
-            {/* Inventory, Purchases & Suppliers: Accessible to ADMIN and PHARMACIST */}
+            {/* Inventory, Purchases, Suppliers & Reports: Accessible to ADMIN and PHARMACIST */}
             <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'PHARMACIST']} />}>
               <Route path="/stock" element={<StockPage />} />
               <Route path="/stock/:id" element={<MedicineDetailsPage />} />
               <Route path="/purchases" element={<PurchasePage />} />
               <Route path="/suppliers" element={<SuppliersPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
             </Route>
 
             {/* System Configuration & Store Settings: ADMIN only */}

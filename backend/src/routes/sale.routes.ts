@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { 
   createSaleInvoice, 
   getSaleInvoices, 
-  getSaleInvoiceById 
+  getSaleInvoiceById,
+  cancelSaleInvoice 
 } from '../controllers/sale.controller';
 
 export const saleRouter = Router();
@@ -10,3 +11,4 @@ export const saleRouter = Router();
 saleRouter.post('/', createSaleInvoice);
 saleRouter.get('/', getSaleInvoices);
 saleRouter.get('/:id', getSaleInvoiceById);
+saleRouter.post('/:id/cancel', cancelSaleInvoice);

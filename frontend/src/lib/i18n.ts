@@ -17,6 +17,7 @@ export const translations = {
     // Nav
     navDashboard: 'Dashboard',
     navBilling: 'Billing (POS)',
+    navSales: 'Sales History',
     navStock: 'Stock / Medicines',
     navPurchases: 'Inward Purchases',
     navSuppliers: 'Suppliers / Vendors',
@@ -150,6 +151,7 @@ export const translations = {
     // Nav
     navDashboard: 'डॅशबोर्ड (मुख्यपृष्ठ)',
     navBilling: 'बिलिंग (काऊंटर)',
+    navSales: 'विक्री इतिहास (Sales)',
     navStock: 'औषधे / साठा',
     navPurchases: 'खरेदी (Purchases)',
     navSuppliers: 'सप्लायर्स / वितरक',

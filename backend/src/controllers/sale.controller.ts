@@ -379,3 +379,94 @@ export const getSaleInvoiceById = async (req: AuthenticatedRequest, res: Respons
     });
   }
 };
+
+/**
+ * POST /api/sales/:id/cancel
+ * Cancel a sale invoice and reverse batch inventory and customer spend
+ */
+export const cancelSaleInvoice = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const client = await pool.connect();
+  try {
+    const storeId = await getStoreId(req);
+    const { id } = req.params;
+
+    await client.query('BEGIN');
+
+    const invRes = await client.query(
+      `SELECT id, customer_id, net_total, status 
+       FROM sales_invoices 
+       WHERE id = $1 AND store_id = $2 FOR UPDATE;`,
+      [id, storeId]
+    );
+
+    if (invRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      res.status(404).json({ success: false, message: 'Invoice not found' });
+      return;
+    }
+
+    const invoice = invRes.rows[0];
+    if (invoice.status === 'CANCELLED') {
+      await client.query('ROLLBACK');
+      res.status(400).json({ success: false, message: 'Invoice is already cancelled' });
+      return;
+    }
+
+    // 1. Restore batch stock for each item
+    const itemsRes = await client.query(
+      `SELECT batch_id, quantity FROM sales_invoice_items WHERE invoice_id = $1;`,
+      [id]
+    );
+
+    for (const item of itemsRes.rows) {
+      if (item.batch_id && item.quantity > 0) {
+        await client.query(
+          `UPDATE medicine_batches 
+           SET current_stock = current_stock + $1, updated_at = NOW() 
+           WHERE id = $2;`,
+          [item.quantity, item.batch_id]
+        );
+      }
+    }
+
+    // 2. Mark invoice as CANCELLED
+    await client.query(
+      `UPDATE sales_invoices 
+       SET status = 'CANCELLED' 
+       WHERE id = $1;`,
+      [id]
+    );
+
+    // 3. Reverse customer spend if customer_id exists
+    if (invoice.customer_id) {
+      await client.query(
+        `UPDATE customers 
+         SET total_purchases = GREATEST(0, total_purchases - $1),
+             total_bills = GREATEST(0, total_bills - 1),
+             updated_at = NOW()
+         WHERE id = $2;`,
+        [Number(invoice.net_total || 0), invoice.customer_id]
+      );
+    }
+
+    await client.query('COMMIT');
+
+    res.json({
+      success: true,
+      message: 'Invoice cancelled successfully and inventory restored to stock.',
+      invoiceId: id,
+      status: 'CANCELLED'
+    });
+  } catch (err: any) {
+    await client.query('ROLLBACK');
+    console.error('Error cancelling sale invoice:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to cancel sale invoice',
+      error: err.message,
+    });
+  } finally {
+    client.release();
+  }
+};
+

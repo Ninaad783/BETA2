@@ -249,7 +249,24 @@ def run_tests():
     has_azithral_batch = any(m.get("batch_number") == "AZ-OCT26-01" for m in res_med_search.get("storeMatches", []))
     test("VERIFY: Inwarded batch AZ-OCT26-01 in stockMatches", 200, code, has_azithral_batch)
 
-    # 26. Forgot Password Flow
+    # 26. Pharmacy Store Profile Endpoints
+    code, res_store = make_request("/api/store", method="GET", token=admin_token)
+    test("GET /api/store (Pharmacy Store Profile)", 200, code, res_store.get("success") is True)
+
+    code, res_store_up = make_request(
+        "/api/store", 
+        method="PUT", 
+        data={"storeName": "MedEasy Pharmacy", "dlNumber": "MH-PUN-2026-DL789", "gstin": "27ABCDE1234F1Z5"}, 
+        token=admin_token
+    )
+    test("PUT /api/store (Update Pharmacy Profile & DL)", 200, code, res_store_up.get("success") is True)
+
+    # 27. Cancel / Refund Sale Invoice with Stock Reversal
+    if created_invoice_id:
+        code, res_cancel = make_request(f"/api/sales/{created_invoice_id}/cancel", method="POST", token=admin_token)
+        test("POST /api/sales/:id/cancel (Cancel Invoice & Reverse Stock)", 200, code, res_cancel.get("success") is True)
+
+    # 28. Forgot Password Flow
     forgot_data = {
         "mobile": "8380036778",
         "new_password": "password123"
@@ -257,7 +274,7 @@ def run_tests():
     code, res = make_request("/api/auth/forgot-password", method="POST", data=forgot_data)
     test("POST /api/auth/forgot-password (Mobile password reset)", 200, code, res.get("success") is True)
 
-    # 27. Logout
+    # 29. Logout
     code, res = make_request("/api/auth/logout", method="POST", data={})
     test("POST /api/auth/logout", 200, code, res.get("success") is True)
 

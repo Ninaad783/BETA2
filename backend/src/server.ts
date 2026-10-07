@@ -8,6 +8,7 @@ import { customerRouter } from "./routes/customer.routes";
 import { saleRouter } from "./routes/sale.routes";
 import { supplierRouter } from "./routes/supplier.routes";
 import { purchaseRouter } from "./routes/purchase.routes";
+import { storeRouter } from "./routes/store.routes";
 
 dotenv.config();
 
@@ -64,6 +65,9 @@ app.use("/api/suppliers", supplierRouter);
 
 // Purchases & Inward Entry Routes
 app.use("/api/purchases", purchaseRouter);
+
+// Pharmacy Store Profile & Settings Routes
+app.use("/api/store", storeRouter);
 
 // Start server
 app.listen(PORT, () => {

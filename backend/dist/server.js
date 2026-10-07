@@ -13,6 +13,7 @@ const customer_routes_1 = require("./routes/customer.routes");
 const sale_routes_1 = require("./routes/sale.routes");
 const supplier_routes_1 = require("./routes/supplier.routes");
 const purchase_routes_1 = require("./routes/purchase.routes");
+const store_routes_1 = require("./routes/store.routes");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5000;
@@ -59,6 +60,8 @@ app.use("/api/sales", sale_routes_1.saleRouter);
 app.use("/api/suppliers", supplier_routes_1.supplierRouter);
 // Purchases & Inward Entry Routes
 app.use("/api/purchases", purchase_routes_1.purchaseRouter);
+// Pharmacy Store Profile & Settings Routes
+app.use("/api/store", store_routes_1.storeRouter);
 // Start server
 app.listen(PORT, () => {
     console.log(`MedEasy Pharmacy OS backend running on http://localhost:${PORT}`);

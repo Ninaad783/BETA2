@@ -29,17 +29,24 @@ export const CustomersPage: React.FC = () => {
 
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'all' | 'refills'>('all');
 
   // Add Customer Form
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [address, setAddress] = useState('');
 
-  const filteredCustomers = customers.filter(
+  const baseCustomers = activeTab === 'refills'
+    ? customers.filter(c => c.totalBills >= 1)
+    : customers;
+
+  const filteredCustomers = baseCustomers.filter(
     (c) =>
       c.fullName.toLowerCase().includes(search.toLowerCase()) ||
       c.mobile.includes(search)
   );
+
+  const refillDueCount = customers.filter(c => c.totalBills >= 1).length;
 
   const totalLifetimePurchases = customers.reduce((sum, c) => sum + c.totalPurchases, 0);
   const totalBillsAcrossCustomers = customers.reduce((sum, c) => sum + c.totalBills, 0);
@@ -62,6 +69,15 @@ export const CustomersPage: React.FC = () => {
     e.stopPropagation();
     setSelectedCustomerId(customerId);
     navigate('/billing');
+  };
+
+  const handleSendRefillWhatsApp = (cust: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const cleanPhone = cust.mobile.replace(/\D/g, '').slice(-10);
+    const msg = isMr
+      ? `नमस्कार ${cust.fullName}जी! मेडइझी फार्मसीमधून (MedEasy Pharmacy) आपल्या नियमित औषधांची तारीख जवळ आली आहे. आपले औषध रिफिल करण्यासाठी कृपया या मेसेजला रिप्लाय द्या किंवा दुकानास भेट द्या. आरोग्यासाठी शुभेच्छा! 🌿`
+      : `Namaskar ${cust.fullName}ji! Your routine monthly medicine course from MedEasy Pharmacy is due for refill. Please reply to reserve your medicines or visit us at the store. Wishing you good health! 🌿`;
+    window.open(`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
   return (
@@ -147,7 +163,34 @@ export const CustomersPage: React.FC = () => {
 
       {/* Customer Directory Table */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
-        <div className="p-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        {/* Directory & Refill Tabs */}
+        <div className="px-4 pt-3 border-b border-slate-200 flex items-center space-x-6 text-xs font-semibold">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`pb-3 flex items-center gap-1.5 transition cursor-pointer ${
+              activeTab === 'all'
+                ? 'text-sky-600 border-b-2 border-sky-600 font-bold'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>{isMr ? 'सर्व ग्राहक' : 'All Customers'} ({customers.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('refills')}
+            className={`pb-3 flex items-center gap-1.5 transition cursor-pointer ${
+              activeTab === 'refills'
+                ? 'text-emerald-600 border-b-2 border-emerald-600 font-bold'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <span>💊</span>
+            <span>{isMr ? 'मासिक औषध रिफिल अलर्ट' : 'Chronic Refill Reminders'} ({refillDueCount})</span>
+          </button>
+        </div>
+
+        <div className="p-3.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -159,7 +202,10 @@ export const CustomersPage: React.FC = () => {
             />
           </div>
           <span className="text-xs text-slate-500">
-            Showing {filteredCustomers.length} registered counter customers
+            {activeTab === 'refills' 
+              ? `Showing ${filteredCustomers.length} clients due for medicine refill`
+              : `Showing ${filteredCustomers.length} registered counter customers`
+            }
           </span>
         </div>
 
@@ -227,6 +273,14 @@ export const CustomersPage: React.FC = () => {
                     <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center space-x-1.5">
                         <button
+                          onClick={(e) => handleSendRefillWhatsApp(cust, e)}
+                          className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-semibold hover:bg-emerald-100 transition cursor-pointer flex items-center gap-1 text-[11px]"
+                          title="Send WhatsApp Refill Reminder"
+                        >
+                          <span>💬</span>
+                          <span>{isMr ? 'रिफिल मेसेज' : 'Refill Alert'}</span>
+                        </button>
+                        <button
                           onClick={() => navigate(`/customers/${cust.id}`)}
                           className="px-2.5 py-1 bg-slate-100 rounded-lg text-slate-700 font-semibold hover:bg-slate-200 transition cursor-pointer flex items-center gap-1 text-[11px]"
                         >
@@ -235,9 +289,9 @@ export const CustomersPage: React.FC = () => {
                         </button>
                         <button
                           onClick={(e) => handleStartBillForCustomer(cust.id, e)}
-                          className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-semibold hover:bg-emerald-100 transition cursor-pointer flex items-center gap-1 text-[11px]"
+                          className="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200 rounded-lg font-semibold hover:bg-sky-100 transition cursor-pointer flex items-center gap-1 text-[11px]"
                         >
-                          <ShoppingBag className="w-3 h-3 text-emerald-600" />
+                          <ShoppingBag className="w-3 h-3 text-sky-600" />
                           <span>{isMr ? 'बिल' : 'New Bill'}</span>
                         </button>
                       </div>

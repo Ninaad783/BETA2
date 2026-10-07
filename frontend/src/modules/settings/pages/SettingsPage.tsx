@@ -26,6 +26,77 @@ export const SettingsPage: React.FC = () => {
   const [userSuccess, setUserSuccess] = useState<string | null>(null);
   const [isSubmittingUser, setIsSubmittingUser] = useState(false);
 
+  // Store Profile State
+  const [storeName, setStoreName] = useState('MedEasy Pharmacy');
+  const [dlNumber, setDlNumber] = useState('');
+  const [gstin, setGstin] = useState('');
+  const [storePhone, setStorePhone] = useState('8380036778');
+  const [whatsappNumber, setWhatsappNumber] = useState('8380036778');
+  const [addressLine, setAddressLine] = useState('');
+  const [thermalHeader, setThermalHeader] = useState('MEDEASY PHARMACY');
+  const [thermalFooter, setThermalFooter] = useState('Thank you for your visit! Wishing you good health.');
+  const [isSavingStore, setIsSavingStore] = useState(false);
+  const [storeSaveSuccess, setStoreSaveSuccess] = useState(false);
+
+  const fetchStoreProfile = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/store`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.store) {
+          setStoreName(data.store.storeName || 'MedEasy Pharmacy');
+          setDlNumber(data.store.dlNumber || '');
+          setGstin(data.store.gstin || '');
+          setStorePhone(data.store.phone || '8380036778');
+          setWhatsappNumber(data.store.whatsappNumber || '8380036778');
+          setAddressLine(data.store.addressLine || '');
+          setThermalHeader(data.store.thermalHeader || 'MEDEASY PHARMACY');
+          setThermalFooter(data.store.thermalFooter || 'Thank you for your visit! Wishing you good health.');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch store profile:', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchStoreProfile();
+  }, []);
+
+  const handleSaveStoreProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingStore(true);
+    setStoreSaveSuccess(false);
+    try {
+      const token = localStorage.getItem('medeasy_auth_token');
+      const res = await fetch(`${API_BASE_URL}/api/store`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          storeName,
+          dlNumber,
+          gstin,
+          phone: storePhone,
+          whatsappNumber,
+          addressLine,
+          thermalHeader,
+          thermalFooter
+        })
+      });
+      if (res.ok) {
+        setStoreSaveSuccess(true);
+        setTimeout(() => setStoreSaveSuccess(false), 3000);
+      }
+    } catch (e) {
+      console.error('Failed to update store profile:', e);
+    } finally {
+      setIsSavingStore(false);
+    }
+  };
+
   // Fetch staff list from backend
   const fetchStaff = async () => {
     if (!token) return;
@@ -128,27 +199,38 @@ export const SettingsPage: React.FC = () => {
       {/* Responsive 2-Column Grid for Optimal Full-Screen & Sidebar-Toggled Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column: Store Profile & Printing Setup */}
-        <div className="space-y-6">
+        <form onSubmit={handleSaveStoreProfile} className="space-y-6">
           {/* Store Info Card */}
           <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-4">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-              <Store className="w-4 h-4 text-emerald-600" />
-              <h3 className="text-sm font-bold text-slate-900">Store Profile & Licenses</h3>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="flex items-center gap-2">
+                <Store className="w-4 h-4 text-emerald-600" />
+                <h3 className="text-sm font-bold text-slate-900">Store Profile & Licenses</h3>
+              </div>
+              {storeSaveSuccess && (
+                <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> Saved!
+                </span>
+              )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="sm:col-span-2">
                 <label className="block font-semibold text-slate-700 mb-1">Medical Store Name</label>
                 <input
                   type="text"
-                  defaultValue="MedEasy Pharmacy"
+                  value={storeName}
+                  onChange={(e) => setStoreName(e.target.value)}
                   placeholder="e.g. MedEasy Pharmacy"
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
+                  required
                 />
               </div>
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Drug License (DL) Number</label>
                 <input
                   type="text"
+                  value={dlNumber}
+                  onChange={(e) => setDlNumber(e.target.value)}
                   placeholder="e.g. MH-PUN-2026-DL1234"
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                 />
@@ -157,6 +239,8 @@ export const SettingsPage: React.FC = () => {
                 <label className="block font-semibold text-slate-700 mb-1">GSTIN Number</label>
                 <input
                   type="text"
+                  value={gstin}
+                  onChange={(e) => setGstin(e.target.value)}
                   placeholder="e.g. 27AABCM1234E1Z1"
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                 />
@@ -165,22 +249,28 @@ export const SettingsPage: React.FC = () => {
                 <label className="block font-semibold text-slate-700 mb-1">Primary Mobile No</label>
                 <input
                   type="tel"
-                  defaultValue="+91 8380036778"
+                  value={storePhone}
+                  onChange={(e) => setStorePhone(e.target.value)}
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
+                  required
                 />
               </div>
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">WhatsApp Billing No</label>
                 <input
                   type="tel"
-                  defaultValue="+91 8380036778"
+                  value={whatsappNumber}
+                  onChange={(e) => setWhatsappNumber(e.target.value)}
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
+                  required
                 />
               </div>
               <div className="sm:col-span-2">
                 <label className="block font-semibold text-slate-700 mb-1">Store Address</label>
                 <input
                   type="text"
+                  value={addressLine}
+                  onChange={(e) => setAddressLine(e.target.value)}
                   placeholder="Enter shop address & location"
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                 />
@@ -199,7 +289,8 @@ export const SettingsPage: React.FC = () => {
                 <label className="block font-semibold text-slate-700 mb-1">Receipt Header Line</label>
                 <input
                   type="text"
-                  defaultValue="MEDEASY PHARMACY"
+                  value={thermalHeader}
+                  onChange={(e) => setThermalHeader(e.target.value)}
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                 />
               </div>
@@ -207,13 +298,23 @@ export const SettingsPage: React.FC = () => {
                 <label className="block font-semibold text-slate-700 mb-1">Receipt Footer Note</label>
                 <input
                   type="text"
-                  defaultValue="Thank you for visiting! Wishing you good health."
+                  value={thermalFooter}
+                  onChange={(e) => setThermalFooter(e.target.value)}
                   className="w-full border border-slate-300 rounded-xl p-2.5 bg-slate-50 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                 />
               </div>
             </div>
+
+            <button
+              type="submit"
+              disabled={isSavingStore}
+              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
+            >
+              <Store className="w-3.5 h-3.5" />
+              <span>{isSavingStore ? 'Saving Changes...' : 'Save Store Profile & Licenses'}</span>
+            </button>
           </div>
-        </div>
+        </form>
 
         {/* Right Column: Database Backup & Language Preferences */}
         <div className="space-y-6">

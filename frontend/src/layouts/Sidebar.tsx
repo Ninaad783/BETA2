@@ -3,6 +3,8 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   ReceiptText, 
+  Receipt,
+  BarChart3,
   Pill, 
   PackagePlus, 
   Truck,
@@ -25,10 +27,12 @@ export const Sidebar: React.FC = () => {
   const allNavItems = [
     { to: '/dashboard', label: t('navDashboard'), icon: LayoutDashboard, roles: ['ADMIN', 'PHARMACIST', 'STAFF'] },
     { to: '/billing', label: t('navBilling'), icon: ReceiptText, roles: ['ADMIN', 'PHARMACIST', 'STAFF'] },
+    { to: '/sales', label: t('navSales'), icon: Receipt, roles: ['ADMIN', 'PHARMACIST', 'STAFF'] },
     { to: '/stock', label: t('navStock'), icon: Pill, badge: stats.lowStockCount, badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-500/30', roles: ['ADMIN', 'PHARMACIST'] },
     { to: '/purchases', label: t('navPurchases'), icon: PackagePlus, roles: ['ADMIN', 'PHARMACIST'] },
     { to: '/suppliers', label: t('navSuppliers'), icon: Truck, roles: ['ADMIN', 'PHARMACIST'] },
     { to: '/customers', label: t('navCustomers'), icon: Users, roles: ['ADMIN', 'PHARMACIST', 'STAFF'] },
+    { to: '/reports', label: t('navReports'), icon: BarChart3, roles: ['ADMIN', 'PHARMACIST'] },
     { to: '/settings', label: t('navSettings'), icon: Settings, roles: ['ADMIN'] },
   ];
 
