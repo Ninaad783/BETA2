@@ -57,6 +57,38 @@ export const BillingPage: React.FC = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showEmptyCartModal, setShowEmptyCartModal] = useState(false);
 
+  // Dynamic Store Profile for printed bills
+  const [storeProfile, setStoreProfile] = useState<{
+    storeName: string;
+    dlNumber: string;
+    gstin: string;
+    phone: string;
+    addressLine: string;
+  }>({
+    storeName: 'MEDEASY PHARMACY',
+    dlNumber: 'MH-PUN-2026-DL789',
+    gstin: '27ABCDE1234F1Z5',
+    phone: '+91 8380036778',
+    addressLine: 'Shop No. 4, Commercial Complex, Sinhagad Road, Pune - 411030'
+  });
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/store`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.store) {
+          setStoreProfile({
+            storeName: data.store.storeName || 'MEDEASY PHARMACY',
+            dlNumber: data.store.dlNumber || 'MH-PUN-2026-DL789',
+            gstin: data.store.gstin || '27ABCDE1234F1Z5',
+            phone: data.store.phone || '+91 8380036778',
+            addressLine: data.store.addressLine || 'Shop No. 4, Commercial Complex, Sinhagad Road, Pune - 411030'
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Selected customer details
   const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
 
@@ -1225,13 +1257,12 @@ export const BillingPage: React.FC = () => {
                   <span>TAX INVOICE (RULE 65 D&amp;C ACT)</span>
                   <span>ORIGINAL FOR RECIPIENT</span>
                 </div>
-                <h1 className="text-2xl font-black tracking-tight uppercase">MEDEASY PHARMACY &amp; HEALTHCARE</h1>
-                <p className="text-xs font-medium text-gray-700">Shop No. 4, Commercial Complex, Sinhagad Road, Pune, Maharashtra - 411030</p>
+                <h1 className="text-2xl font-black tracking-tight uppercase">{storeProfile.storeName}</h1>
+                <p className="text-xs font-medium text-gray-700">{storeProfile.addressLine}</p>
                 <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] font-semibold mt-1">
-                  <span>D.L. No: <strong>MH-PUN-20B-184920 / 21B-184921</strong></span>
-                  <span>GSTIN: <strong>27AABCM8291P1ZV</strong></span>
-                  <span>FSSAI: <strong>11521034000123</strong></span>
-                  <span>Phone: <strong>+91 8380036778</strong></span>
+                  <span>D.L. No: <strong>{storeProfile.dlNumber || 'MH-PUN-2026-DL789'}</strong></span>
+                  <span>GSTIN: <strong>{storeProfile.gstin || '27ABCDE1234F1Z5'}</strong></span>
+                  <span>Phone: <strong>{storeProfile.phone}</strong></span>
                 </div>
               </div>
 
@@ -1347,7 +1378,7 @@ export const BillingPage: React.FC = () => {
                     <p className="font-medium">Customer's Signature</p>
                   </div>
                   <div className="text-center w-64 border-t border-black pt-1">
-                    <p className="font-bold">For MEDEASY PHARMACY</p>
+                    <p className="font-bold">For {storeProfile.storeName}</p>
                     <p className="text-[9px] text-gray-600">Registered Pharmacist &amp; Dispenser</p>
                   </div>
                 </div>
