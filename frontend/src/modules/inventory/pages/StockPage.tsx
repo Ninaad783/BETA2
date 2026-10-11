@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Eye, Edit3, Download, Pill, Layers, Sparkles, Database } from 'lucide-react';
+import { Plus, Search, Eye, Edit3, Download, Pill, Layers, Sparkles, Database, Truck } from 'lucide-react';
 import { useUIStore } from '../../../stores/uiStore';
 import { usePharmacyStore } from '../../../stores/pharmacyStore';
 import type { Medicine } from '../../../types/pharmacy.types';
@@ -17,12 +17,15 @@ export const StockPage: React.FC = () => {
     addMedicine,
     updateMedicine,
     setSelectedMedicineId,
-    fetchMedicines
+    fetchMedicines,
+    suppliers,
+    fetchSuppliers
   } = usePharmacyStore();
 
   useEffect(() => {
     fetchMedicines();
-  }, [fetchMedicines]);
+    fetchSuppliers();
+  }, [fetchMedicines, fetchSuppliers]);
 
   const [localSearch, setLocalSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -55,6 +58,7 @@ export const StockPage: React.FC = () => {
   const [mrp, setMrp] = useState(40);
   const [sellingPrice, setSellingPrice] = useState(36);
   const [quantity, setQuantity] = useState(50);
+  const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [masterSuggestions, setMasterSuggestions] = useState<any[]>([]);
   const [showMasterSuggestions, setShowMasterSuggestions] = useState(false);
 
@@ -122,6 +126,8 @@ export const StockPage: React.FC = () => {
     e.preventDefault();
     if (!name || !batchNumber) return;
 
+    const matchedSupplier = suppliers.find((s) => s.id === selectedSupplierId);
+
     addMedicine(
       {
         name,
@@ -142,7 +148,9 @@ export const StockPage: React.FC = () => {
         purchasePrice: Number(purchasePrice),
         mrp: Number(mrp),
         sellingPrice: Number(sellingPrice),
-        currentStock: Number(quantity)
+        currentStock: Number(quantity),
+        supplierId: selectedSupplierId || undefined,
+        supplierName: matchedSupplier?.name || undefined
       }
     );
 
@@ -151,6 +159,7 @@ export const StockPage: React.FC = () => {
     setGenericName('');
     setBatchNumber('');
     setManufacturer('');
+    setSelectedSupplierId('');
     setRequiresPrescription(false);
   };
 
@@ -531,6 +540,29 @@ export const StockPage: React.FC = () => {
             <span className="text-[11px] font-bold text-sky-800 uppercase tracking-wider block flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-sky-600" /> Initial Batch & Pricing
             </span>
+
+            {/* Supplier Selection */}
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5 text-sky-600" />
+                  <span>Supplier / Wholesale Distributor</span>
+                </span>
+                <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+              </label>
+              <select
+                value={selectedSupplierId}
+                onChange={(e) => setSelectedSupplierId(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl p-2 bg-white font-medium text-slate-800 text-xs focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none cursor-pointer"
+              >
+                <option value="">-- Direct Stock / Select Supplier --</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} {s.mobile ? `(${s.mobile})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>

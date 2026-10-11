@@ -8,7 +8,7 @@ import { DashboardPage } from '../../modules/dashboard/pages/DashboardPage';
 import { BillingPage } from '../../modules/billing/pages/BillingPage';
 import { StockPage } from '../../modules/inventory/pages/StockPage';
 import { MedicineDetailsPage } from '../../modules/inventory/pages/MedicineDetailsPage';
-import { PurchasePage } from '../../modules/purchases/pages/PurchasePage';
+// import { PurchasePage } from '../../modules/purchases/pages/PurchasePage';
 import { CustomersPage } from '../../modules/customers/pages/CustomersPage';
 import { CustomerDetailsPage } from '../../modules/customers/pages/CustomerDetailsPage';
 import { SettingsPage } from '../../modules/settings/pages/SettingsPage';
@@ -34,13 +34,14 @@ export const AppRouter: React.FC = () => {
             <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'PHARMACIST']} />}>
               <Route path="/stock" element={<StockPage />} />
               <Route path="/stock/:id" element={<MedicineDetailsPage />} />
-              <Route path="/purchases" element={<PurchasePage />} />
+              {/* <Route path="/purchases" element={<PurchasePage />} /> */}
               <Route path="/suppliers" element={<SuppliersPage />} />
               <Route path="/reports" element={<ReportsPage />} />
             </Route>
 
-            {/* System Configuration & Store Settings: ADMIN only */}
+            {/* System Configuration & Store Profile: ADMIN only */}
             <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+              <Route path="/profile" element={<SettingsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>

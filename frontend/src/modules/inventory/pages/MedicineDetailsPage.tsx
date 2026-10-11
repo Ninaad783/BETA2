@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit3, Plus, Layers, Calendar, DollarSign, Package } from 'lucide-react';
+import { ArrowLeft, Edit3, Plus, Layers, Calendar, DollarSign, Package, Truck } from 'lucide-react';
 import { useUIStore } from '../../../stores/uiStore';
 import { usePharmacyStore } from '../../../stores/pharmacyStore';
 import { Modal } from '../../../components/ui/Modal';
@@ -9,7 +9,11 @@ export const MedicineDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { t } = useUIStore();
   const navigate = useNavigate();
-  const { medicines, addBatchToMedicine, adjustBatchStock, updateMedicine } = usePharmacyStore();
+  const { medicines, addBatchToMedicine, adjustBatchStock, updateMedicine, suppliers, fetchSuppliers } = usePharmacyStore();
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, [fetchSuppliers]);
 
   const medicine = medicines.find((m) => m.id === id) || medicines[0];
 
@@ -20,6 +24,7 @@ export const MedicineDetailsPage: React.FC = () => {
   const [newMrp, setNewMrp] = useState(35.0);
   const [newSelling, setNewSelling] = useState(32.0);
   const [newStock, setNewStock] = useState(30);
+  const [newSupplierId, setNewSupplierId] = useState('');
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState(medicine?.name || '');
@@ -34,6 +39,7 @@ export const MedicineDetailsPage: React.FC = () => {
   const [adjustingBatch, setAdjustingBatch] = useState<{ batchNumber: string; currentStock: number } | null>(null);
   const [adjustedQty, setAdjustedQty] = useState(0);
   const [adjustmentReason, setAdjustmentReason] = useState('Physical Stock Audit Count');
+  const [adjustSupplierId, setAdjustSupplierId] = useState('');
 
   const handleOpenEdit = () => {
     if (medicine) {
@@ -68,13 +74,24 @@ export const MedicineDetailsPage: React.FC = () => {
   const handleSaveAdjustment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!medicine || !adjustingBatch) return;
-    adjustBatchStock(medicine.id, adjustingBatch.batchNumber, adjustedQty, adjustmentReason);
+    const matchedSupplier = suppliers.find((s) => s.id === adjustSupplierId);
+    adjustBatchStock(
+      medicine.id, 
+      adjustingBatch.batchNumber, 
+      adjustedQty, 
+      adjustmentReason,
+      adjustSupplierId || undefined,
+      matchedSupplier?.name || undefined
+    );
     setAdjustingBatch(null);
+    setAdjustSupplierId('');
   };
 
   const handleAddBatch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBatchNo || !medicine) return;
+
+    const matchedSupplier = suppliers.find((s) => s.id === newSupplierId);
 
     addBatchToMedicine(medicine.id, {
       batchNumber: newBatchNo,
@@ -82,11 +99,14 @@ export const MedicineDetailsPage: React.FC = () => {
       purchasePrice: Number(newCost),
       mrp: Number(newMrp),
       sellingPrice: Number(newSelling),
-      currentStock: Number(newStock)
+      currentStock: Number(newStock),
+      supplierId: newSupplierId || undefined,
+      supplierName: matchedSupplier?.name || undefined
     });
 
     setShowAddBatchModal(false);
     setNewBatchNo('');
+    setNewSupplierId('');
   };
 
   if (!medicine) {
@@ -220,7 +240,15 @@ export const MedicineDetailsPage: React.FC = () => {
                     className={isFirstWithStock ? 'bg-emerald-50/30' : 'hover:bg-slate-50/50'}
                   >
                     <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
-                    <td className="p-3 font-mono font-bold text-slate-900">{batch.batchNumber}</td>
+                    <td className="p-3 font-mono font-bold text-slate-900">
+                      <span>{batch.batchNumber}</span>
+                      {batch.supplierName && (
+                        <span className="text-[10px] text-sky-700 bg-sky-50 border border-sky-200/60 px-1.5 py-0.5 rounded font-sans font-medium flex items-center gap-1 w-fit mt-0.5">
+                          <Truck className="w-2.5 h-2.5 text-sky-600" />
+                          <span>{batch.supplierName}</span>
+                        </span>
+                      )}
+                    </td>
                     <td className="p-3 font-semibold text-slate-700">
                       {batch.expiryDate}{' '}
                       {isFirstWithStock && <span className="text-emerald-700 text-[10px] font-bold">(Active)</span>}
@@ -272,6 +300,29 @@ export const MedicineDetailsPage: React.FC = () => {
         iconBg="bg-sky-50 border-sky-100"
       >
         <form onSubmit={handleAddBatch} className="space-y-4 text-xs">
+          {/* Supplier Selection */}
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Truck className="w-3.5 h-3.5 text-sky-600" />
+                <span>Supplier / Wholesale Distributor</span>
+              </span>
+              <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+            </label>
+            <select
+              value={newSupplierId}
+              onChange={(e) => setNewSupplierId(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white font-medium text-slate-800 text-xs focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none cursor-pointer"
+            >
+              <option value="">-- Direct Stock / Select Supplier --</option>
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} {s.mobile ? `(${s.mobile})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="block font-semibold text-slate-700 mb-1.5">Batch Number *</label>
             <div className="relative">
@@ -496,6 +547,28 @@ export const MedicineDetailsPage: React.FC = () => {
                 onChange={(e) => setAdjustedQty(Math.max(0, parseInt(e.target.value) || 0))}
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold text-slate-900 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
               />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5 text-sky-600" />
+                  <span>Refill Supplier / Distributor</span>
+                </span>
+                <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+              </label>
+              <select
+                value={adjustSupplierId}
+                onChange={(e) => setAdjustSupplierId(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 font-medium text-slate-800 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none cursor-pointer"
+              >
+                <option value="">-- Direct Stock / Select Supplier --</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} {s.mobile ? `(${s.mobile})` : ''}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

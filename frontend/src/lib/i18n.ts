@@ -24,7 +24,8 @@ export const translations = {
     navCustomers: 'Customers',
     navUdhaar: 'Customers',
     navReports: 'Reports & Profit',
-    navSettings: 'Settings / Backup',
+    navProfile: 'Profile',
+    navSettings: 'Profile',
     
     // Dashboard
     dashTitle: 'Daily Pharmacy Dashboard',
@@ -158,7 +159,8 @@ export const translations = {
     navCustomers: 'ग्राहक (Customers)',
     navUdhaar: 'ग्राहक (Customers)',
     navReports: 'नफा व अहवाल',
-    navSettings: 'सेटिंग्ज व बॅकअप',
+    navProfile: 'प्रोफाइल (Profile)',
+    navSettings: 'प्रोफाइल (Profile)',
     
     // Dashboard
     dashTitle: 'दैनिक मेडिकल डॅशबोर्ड',

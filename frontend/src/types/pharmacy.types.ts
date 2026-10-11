@@ -20,6 +20,8 @@ export interface MedicineBatch {
   currentStock: number;
   initialStock?: number;
   isServing?: boolean;
+  supplierId?: string;
+  supplierName?: string;
 }
 
 export interface Medicine {
@@ -165,6 +167,8 @@ export interface StockAdjustment {
   differenceQty: number;
   reason: string;
   adjustedBy?: string;
+  supplierId?: string;
+  supplierName?: string;
   createdAt: string;
 }
 

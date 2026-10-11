@@ -188,9 +188,9 @@ export const SettingsPage: React.FC = () => {
             ⚙️
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Pharmacy Settings & Disaster Recovery</h1>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Pharmacy Profile & Store Configuration</h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Manage local store profile, bilingual staff preferences, and automatic data backups.
+              Manage store profile, Drug License & GSTIN, staff accounts, and system preferences.
             </p>
           </div>
         </div>

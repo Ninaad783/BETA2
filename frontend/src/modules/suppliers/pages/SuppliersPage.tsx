@@ -230,11 +230,11 @@ export const SuppliersPage: React.FC = () => {
                     </td>
                     <td className="p-3 text-center">
                       <button
-                        onClick={() => navigate('/purchases')}
-                        className="px-3 py-1 bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100 rounded-lg font-semibold text-[11px] transition flex items-center gap-1 mx-auto cursor-pointer"
+                        onClick={() => navigate('/stock')}
+                        className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-lg font-semibold text-[11px] transition flex items-center gap-1 mx-auto cursor-pointer"
                       >
-                        <ShoppingBag className="w-3 h-3" />
-                        <span>{isMr ? 'खरेदी नोंद' : '+ Purchase Bill'}</span>
+                        <Plus className="w-3 h-3 text-emerald-600" />
+                        <span>{isMr ? 'स्टॉक रिफिल' : '+ Refill Stock'}</span>
                       </button>
                     </td>
                   </tr>

@@ -73,7 +73,7 @@ interface PharmacyState {
   // Medicine & Batch actions
   addMedicine: (medicine: Omit<Medicine, 'id' | 'totalStock' | 'status' | 'batches'>, initialBatch: Omit<MedicineBatch, 'id' | 'medicineId'>) => void;
   updateMedicine: (id: string, updates: Partial<Omit<Medicine, 'id' | 'batches'>>) => void;
-  adjustBatchStock: (medicineId: string, batchNumber: string, newStock: number, reason: string) => void;
+  adjustBatchStock: (medicineId: string, batchNumber: string, newStock: number, reason: string, supplierId?: string, supplierName?: string) => void;
   addBatchToMedicine: (medicineId: string, batchData: Omit<MedicineBatch, 'id' | 'medicineId'>) => void;
 
   // Customer actions
@@ -536,7 +536,7 @@ export const usePharmacyStore = create<PharmacyState>()(
     }
   },
 
-  adjustBatchStock: (medicineId, batchNumber, newStock, reason) => {
+  adjustBatchStock: (medicineId, batchNumber, newStock, reason, supplierId, supplierName) => {
     set((state) => {
       let prevStock = 0;
       let matchedMedName = '';
@@ -549,7 +549,12 @@ export const usePharmacyStore = create<PharmacyState>()(
             if (b.batchNumber === batchNumber) {
               prevStock = b.currentStock;
               matchedBatchId = b.id;
-              return { ...b, currentStock: Math.max(0, newStock) };
+              return { 
+                ...b, 
+                currentStock: Math.max(0, newStock),
+                ...(supplierId ? { supplierId } : {}),
+                ...(supplierName ? { supplierName } : {})
+              };
             }
             return b;
           });
@@ -575,6 +580,8 @@ export const usePharmacyStore = create<PharmacyState>()(
         adjustedStock: newStock,
         differenceQty: newStock - prevStock,
         reason: reason || 'Manual Physical Audit Adjustment',
+        supplierId,
+        supplierName,
         adjustedBy: 'Rahul Patil (Admin)',
         createdAt: new Date().toLocaleString('en-IN')
       };

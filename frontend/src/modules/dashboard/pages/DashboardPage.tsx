@@ -5,11 +5,11 @@ import {
   Receipt, 
   Clock, 
   Package, 
-  ShoppingBag, 
   Plus, 
   ArrowUpRight,
   ChevronRight,
-  Users
+  Users,
+  Truck
 } from 'lucide-react';
 import { useUIStore } from '../../../stores/uiStore';
 import { usePharmacyStore } from '../../../stores/pharmacyStore';
@@ -17,13 +17,14 @@ import { usePharmacyStore } from '../../../stores/pharmacyStore';
 export const DashboardPage: React.FC = () => {
   const { t } = useUIStore();
   const navigate = useNavigate();
-  const { stats, salesInvoices, fetchSales, fetchCustomers } = usePharmacyStore();
+  const { stats, salesInvoices, suppliers, fetchSales, fetchCustomers, fetchSuppliers } = usePharmacyStore();
   const recentInvoices = (salesInvoices || []).slice(0, 5);
 
   useEffect(() => {
     fetchSales();
     fetchCustomers();
-  }, [fetchSales, fetchCustomers]);
+    fetchSuppliers();
+  }, [fetchSales, fetchCustomers, fetchSuppliers]);
 
   return (
     <div className="space-y-6">
@@ -53,11 +54,11 @@ export const DashboardPage: React.FC = () => {
             <span>{t('newBillBtn')}</span>
           </button>
           <button
-            onClick={() => navigate('/purchases')}
+            onClick={() => navigate('/suppliers')}
             className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 transition cursor-pointer"
           >
-            <ShoppingBag className="w-3.5 h-3.5" />
-            <span>{t('purchaseEntryBtn')}</span>
+            <Truck className="w-3.5 h-3.5" />
+            <span>Suppliers ({suppliers.length})</span>
           </button>
         </div>
       </div>
@@ -134,31 +135,31 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Today's Inward Purchases */}
+        {/* Suppliers & Wholesale Distributors */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-md transition flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-              <span>{t('todaysPurchase')}</span>
+              <span>Suppliers & Distributors</span>
             </span>
             <span className="w-7 h-7 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600">
-              <ShoppingBag className="w-4 h-4" />
+              <Truck className="w-4 h-4" />
             </span>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-slate-900 tracking-tight font-mono">
-              ₹{stats.todayPurchaseTotal.toLocaleString('en-IN')}
+              {suppliers.length} <span className="text-sm font-normal text-slate-500">Agencies</span>
             </span>
             <button
-              onClick={() => navigate('/purchases')}
+              onClick={() => navigate('/suppliers')}
               className="text-xs font-semibold text-sky-700 hover:text-sky-900 underline flex items-center gap-0.5 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100 cursor-pointer"
             >
-              <span>Invoices</span>
+              <span>View All</span>
               <ArrowUpRight className="w-3 h-3" />
             </button>
           </div>
           <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
-            <span>Stock Inward Received</span>
-            <span className="text-sky-600 font-semibold">100% Settled</span>
+            <span>Wholesale Supply Network</span>
+            <span className="text-sky-600 font-semibold">Active</span>
           </div>
         </div>
       </div>
@@ -361,16 +362,16 @@ export const DashboardPage: React.FC = () => {
               </button>
 
               <button
-                onClick={() => navigate('/purchases')}
+                onClick={() => navigate('/suppliers')}
                 className="w-full p-3 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-sky-50/60 hover:border-sky-200 text-left transition flex items-center justify-between group cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
-                    <ShoppingBag className="w-4 h-4" />
+                    <Truck className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900 text-xs group-hover:text-sky-700">Inward Purchase Entry</p>
-                    <p className="text-[11px] text-slate-500">Stock in from Pune distributors</p>
+                    <p className="font-bold text-slate-900 text-xs group-hover:text-sky-700">Suppliers & Distributors</p>
+                    <p className="text-[11px] text-slate-500">Manage registered wholesale agencies</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-sky-600 transition" />
