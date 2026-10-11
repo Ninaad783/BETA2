@@ -214,6 +214,12 @@ export const TopHeader: React.FC = () => {
                             <span className="text-[9px] bg-sky-100 text-sky-800 font-semibold px-1.5 py-0.2 rounded shrink-0">{med.form || 'Tab'}</span>
                           </div>
                           <p className="text-[11px] text-slate-500 truncate">{med.generic_name} • {med.manufacturer || 'Mfr'}</p>
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mt-0.5">
+                            <span className="font-mono bg-sky-50 text-sky-700 font-bold px-1.5 py-0.2 rounded border border-sky-200">
+                              Batch: B-STD
+                            </span>
+                            <span className="text-slate-500">Exp: 12/28</span>
+                          </div>
                         </div>
                         <div className="text-right shrink-0 ml-2">
                           <span className="font-bold text-xs text-sky-700">₹{Number(med.typical_mrp || 50).toFixed(2)}</span>

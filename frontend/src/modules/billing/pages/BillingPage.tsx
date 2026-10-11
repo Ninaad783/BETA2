@@ -360,27 +360,38 @@ export const BillingPage: React.FC = () => {
                       <span>In Store Inventory</span>
                       <span className="text-emerald-600 font-semibold">{searchResults.length} in stock</span>
                     </div>
-                    {searchResults.map((med) => (
-                      <div
-                        key={med.id}
-                        onClick={() => handleSelectMedicine(med)}
-                        className="p-3 hover:bg-emerald-50/60 cursor-pointer flex justify-between items-center transition"
-                      >
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-xs text-slate-900">{med.name}</span>
-                            <span className="text-[9px] bg-emerald-100 text-emerald-800 font-semibold px-1.5 py-0.5 rounded">Ready to Bill</span>
+                    {searchResults.map((med) => {
+                      const activeBatch = med.batches?.[0];
+                      return (
+                        <div
+                          key={med.id}
+                          onClick={() => handleSelectMedicine(med)}
+                          className="p-3 hover:bg-emerald-50/60 cursor-pointer flex justify-between items-center transition"
+                        >
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-xs text-slate-900">{med.name}</span>
+                              <span className="text-[9px] bg-emerald-100 text-emerald-800 font-semibold px-1.5 py-0.5 rounded">Ready to Bill</span>
+                            </div>
+                            <span className="text-[11px] text-slate-500 block mt-0.5">
+                              {med.genericName} • Stock: {med.totalStock} {med.unit}s
+                            </span>
+                            <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-1">
+                              <span className="font-mono bg-emerald-50 text-emerald-800 font-bold px-1.5 py-0.5 rounded border border-emerald-200">
+                                Batch: {activeBatch?.batchNumber || 'B-STD'}
+                              </span>
+                              <span className="text-slate-500 font-medium">
+                                Exp: {activeBatch?.expiryDate ? (activeBatch.expiryDate.includes('-') ? `${activeBatch.expiryDate.split('-')[1]}/${activeBatch.expiryDate.split('-')[0]}` : activeBatch.expiryDate) : '12/28'}
+                              </span>
+                            </div>
                           </div>
-                          <span className="text-[11px] text-slate-500 block mt-0.5">
-                            {med.genericName} • Stock: {med.totalStock} {med.unit}s
-                          </span>
+                          <div className="text-right">
+                            <span className="font-bold text-xs text-emerald-600">₹{med.sellingPrice.toFixed(2)}</span>
+                            <span className="text-[10px] text-slate-400 block line-through">MRP ₹{med.mrp.toFixed(2)}</span>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <span className="font-bold text-xs text-emerald-600">₹{med.sellingPrice.toFixed(2)}</span>
-                          <span className="text-[10px] text-slate-400 block line-through">MRP ₹{med.mrp.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
@@ -415,8 +426,17 @@ export const BillingPage: React.FC = () => {
                             <span className="mx-1">•</span>
                             <span className="text-slate-400">{med.manufacturer}</span>
                           </div>
-                          <div className="text-[10px] text-slate-400">
-                            Pack: {med.pack_size} | HSN: {med.hsn_code} | GST: {med.gst_rate}%
+                          <div className="text-[10px] text-slate-500 flex items-center gap-2 flex-wrap pt-0.5">
+                            <span className="font-mono bg-sky-100/80 text-sky-800 font-bold px-1.5 py-0.5 rounded border border-sky-200">
+                              Batch: B-STD
+                            </span>
+                            <span className="text-slate-600 font-medium">Exp: 12/28</span>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-slate-500">Pack: {med.pack_size}</span>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-slate-400">HSN: {med.hsn_code}</span>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-slate-400">GST: {med.gst_rate}%</span>
                           </div>
                         </div>
                         <div className="text-right shrink-0 ml-3">
